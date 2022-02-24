@@ -16,6 +16,10 @@
 /* Includes
  * ------------------------------------------------------------------------------------
  */
+#ifdef NILAI_TEST
+#include "test/Mocks/CAN/can.h"
+#endif
+
 #    if defined(NILAI_USE_CAN)
 #        include "defines/internalConfig.h"
 #        include NILAI_HAL_HEADER
