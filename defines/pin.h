@@ -23,7 +23,7 @@
 
 #include <cstdint>
 
-namespace cep
+namespace Nilai::Defines
 {
 /*****************************************************************************/
 /* Exported types */

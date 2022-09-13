@@ -52,7 +52,7 @@
 #define NILAI_LOG_ENABLE_INFO
 #define NILAI_LOG_ENABLE_WARNING
 #define NILAI_LOG_ENABLE_ERROR
-#define NILAI_LOG_ENABLE_CRITICAL
+#define NILAI_LOG_ENABLE_FATAL
 
 /**
  * Defines the hardware layer used by Umo.

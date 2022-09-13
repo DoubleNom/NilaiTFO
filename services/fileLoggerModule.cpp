@@ -14,78 +14,65 @@
 #include "services/logger.hpp"
 
 #include <cstring>
+#include "defines/macros.hpp"
 
 FileLogger::FileLogger(const std::string& label, const std::string& path)
-: m_label(label), m_path(path)
-{
+: m_label(label)
+, m_path(path) {
     m_logFile = cep::Filesystem::File(path, cep::Filesystem::FileModes::WRITE_APPEND);
 
-    LOG_INFO("[%s]: Initialized", m_label.c_str());
+    LOGTI(m_label.c_str(), "Initialized");
 }
 
-FileLogger::~FileLogger()
-{
-    if (m_path.empty() == false)
-    {
+FileLogger::~FileLogger() {
+    if (m_path.empty() == false) {
         // Just flush the cache if the path is valid (not empty).
         Flush();
     }
 }
 
-bool FileLogger::DoPost()
-{
-    if (m_logFile.IsOpen() == false)
-    {
-        if (m_logFile.Open(m_path, cep::Filesystem::FileModes::WRITE_APPEND) !=
-            cep::Filesystem::Result::Ok)
-        {
-            LOG_ERROR("[%s]: POST error, unable to open log file: %s",
-                      m_label.c_str(),
-                      cep::Filesystem::ResultToStr(m_logFile.GetError()).c_str());
+bool FileLogger::DoPost() {
+    if (m_logFile.IsOpen() == false) {
+        if (m_logFile.Open(m_path, cep::Filesystem::FileModes::WRITE_APPEND) != cep::Filesystem::Result::Ok) {
+            LOGTE(
+              m_label.c_str(),
+              "POST error, unable to open log file: %s",
+              cep::Filesystem::ResultToStr(m_logFile.GetError()).c_str());
             return false;
         }
     }
     cep::Filesystem::Result r = m_logFile.Close();
-    if (r != cep::Filesystem::Result::Ok)
-    {
-        LOG_ERROR("[%s]: POST error, unable to close log file: %s",
-                  m_label.c_str(),
-                  cep::Filesystem::ResultToStr(r));
+    if (r != cep::Filesystem::Result::Ok) {
+        LOGTE(m_label.c_str(), "POST error, unable to close log file: %s", cep::Filesystem::ResultToStr(r));
         return false;
     }
-    LOG_INFO("[%s]: POST OK!", m_label.c_str());
+    LOGTI(m_label.c_str(), "POST OK!");
     return true;
 }
 
-void FileLogger::Run()
-{
+void FileLogger::Run() {
     static size_t lastSync = 0;
 
-    if (HAL_GetTick() >= lastSync + SYNC_TIME)
-    {
+    if (HAL_GetTick() >= lastSync + SYNC_TIME) {
         lastSync = HAL_GetTick();
         Flush();
     }
 }
 
-void FileLogger::Flush()
-{
+void FileLogger::Flush() {
     using namespace cep::Filesystem;
     Result r;
 
     // If the cache is empty, no need to go through all that.
-    if (m_cacheLoc == 0)
-    {
+    if (m_cacheLoc == 0) {
         return;
     }
 
     // If the log file is not open:
-    if (m_logFile.IsOpen() == false)
-    {
+    if (m_logFile.IsOpen() == false) {
         // Open it.
         r = m_logFile.Open(m_path, FileModes::WRITE_APPEND);
-        if (r != Result::Ok)
-        {
+        if (r != Result::Ok) {
             CEP_ASSERT(false, "Unable to open log file!");
             m_cacheLoc = 0;
             return;
@@ -95,16 +82,14 @@ void FileLogger::Flush()
     // Write the local cache to the file.
     size_t dw = 0;
     r         = m_logFile.Write(m_cache, m_cacheLoc, &dw);
-    if ((r != Result::Ok) || (m_cacheLoc != dw))
-    {
+    if ((r != Result::Ok) || (m_cacheLoc != dw)) {
         CEP_ASSERT(false, "Unable to write to log file: %s", ResultToStr(r).c_str());
         m_cacheLoc = 0;
         return;
     }
 
     r = m_logFile.Close();
-    if (r != Result::Ok)
-    {
+    if (r != Result::Ok) {
         CEP_ASSERT(false, "Unable to close file!");
         m_cacheLoc = 0;
         return;
@@ -113,11 +98,9 @@ void FileLogger::Flush()
     m_cacheLoc = 0;
 }
 
-void FileLogger::Log(const char* msg, size_t len)
-{
+void FileLogger::Log(const char* msg, size_t len) {
     // If buffer is full, flush it.
-    if (m_cacheLoc + len >= CACHE_SIZE - 1)
-    {
+    if (m_cacheLoc + len >= CACHE_SIZE - 1) {
         Flush();
     }
     std::strncpy(&m_cache[m_cacheLoc], msg, len);

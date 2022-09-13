@@ -1,7 +1,6 @@
 #include <defines/circular_buffer.hpp>
 #include <gtest/gtest.h>
 
-
 TEST(CircularBuffer, Default) {
     CircularBuffer<int> cb(0);
     EXPECT_EQ(0, cb.size());

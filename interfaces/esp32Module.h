@@ -18,203 +18,142 @@
 #if !defined(NILAI_USE_UART)
 #error The UART module must be enabled to use the ESP32 Module
 #endif
+
 #include "defines/internalConfig.h"
 #include NILAI_HAL_HEADER
 #include "defines/module.hpp"
 #include "defines/pin.h"
-#include "drivers/uart/it.hpp"
 
 #include <array>
+#include <drivers/uart/module.hpp>
 #include <map>
+#include <string_view>
+#include <utility>
 
-/***********************************************/
-/* Defines */
-namespace CEP_ESP32 {
+namespace Nilai::Interfaces::Esp32 {
 /**
  * Boot modes for the ESP32.
  */
-enum class BootMode
-{
+enum class BootMode {
     Bootloader = 0,    //!< Bootloader
     Normal     = 1,    //!< Normal
+};
+
+/**
+ * Firmware files for flashing ESP32
+ */
+using namespace std::literals;
+struct Firmware {
+    struct File {
+        std::string name;
+        uint32_t    address;
+        std::string path;
+
+        File(std::string name, uint32_t address)
+        : name(std::move(name))
+        , address(address) {
+        }
+    };
+
+    std::string       folder;
+    std::vector<File> files;
+
+
+    Firmware() = default;
+
+    Firmware(std::string folder, std::vector<File> files)
+    : folder(std::move(folder))
+    , files(std::move(files)) {
+        for (auto& file : this->files) {
+            file.path = this->folder + "/" + file.name;
+        }
+    }
+
+    std::string GetNoEraseFilePath() {
+        return folder + "/debug";
+    }
 };
 
 /**
  * Contains all the control pins of the ESP32 module.
  */
 struct Pins {
-    cep::Pin enable = {};    //!< Enable pin of the ESP32. When high, the ESP32 is enabled.
-    cep::Pin boot   = {};    /**< Boot selection pin.
-                              *   When high, normal boot.
-                              *   When low, runs the bootloader.
-                              */
-    cep::Pin tpout = {};     //!< Heartbeat pin from the ESP32 to the STM32.
-    cep::Pin tpin  = {};     //!< Debug signal from the STM32 to the ESP32, currently not used.
+    Nilai::Defines::Pin enable = {};    //!< Enable pin of the ESP32. When high, the ESP32 is enabled.
+    Nilai::Defines::Pin boot   = {};    /**< Boot selection pin.
+                                         *   When high, normal boot.
+                                         *   When low, runs the bootloader.
+                                         */
+    Nilai::Defines::Pin tpout = {};     //!< Heartbeat pin from the ESP32 to the STM32.
+    Nilai::Defines::Pin tpin  = {};     //!< Debug signal from the STM32 to the ESP32, currently not used.
 };
-}    // namespace CEP_ESP32
 
-/***********************************************/
-/* Function declarations */
-
-class EspModule : public cep::Module {
+class Module : public Nilai::Drivers::Uart::Module {
   public:
-    EspModule(
-      const std::string&     label,
-      UartModuleIt*          uart,
-      uint8_t*               userData,
-      size_t                 dataLen,
-      const CEP_ESP32::Pins& pins);
-    virtual ~EspModule() override = default;
+    Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins);
 
-    virtual bool               DoPost() override;
-    virtual void               Run() override;
-    virtual const std::string& GetLabel() const {
-        return m_label;
-    }
+    ~Module() override = default;
+
+    bool DoPost() override;
+
+    void Run() override;
 
     /**
      * Enables the ESP32 through the enable pin.
+     * Will reset the ESP during process
+     * @return true on successfull boot
      */
-    void Enable();
+    bool Enable(BootMode mode = BootMode::Normal);
 
     /**
      * Disables the ESP32 through the enable pin.
      */
     void Disable();
+
     /**
      * Checks if the ESP32 is currently enabled.
      * @return True if the ESP32 is enabled, false otherwise.
      */
-    bool IsEnabled() const {
-        return m_enabled;
+    [[nodiscard]] bool IsEnabled() const {
+        return m_pins.enable.Get();
     }
 
     /**
-     * Sets the boot mode of the ESP32.
-     *
-     * For this to have any effects on the ESP32, you must follow these steps:
-     *  - Disable the ESP32
-     *  - Set the boot mode
-     *  - Enable the ESP32
-     * @param mode The desired boot mode.
+     * Set Firmware used for flashing ESP on POST
+     * Default firmware (empty) will disable flashing procedure.
+     * @param firmware structure of the binary files
      */
-    void SetBootMode(CEP_ESP32::BootMode mode);
+    void SetFirmware(Firmware& firmware) {
+        m_firmware = std::move(firmware);
+    }
 
     /**
-     * Programs the ESP32 with the specified binary file located on the SD card.
-     *
-     * If the file cannot be found on the SD card, nothing is done.
-     *
-     * If NILAI_USE_SD is not defined, this function will always return false.
-     *
-     * To program the ESP32, you must follow these steps:
-     *  - Disable the ESP32
-     *  - Enter the ESP32's bootloader
-     *  - Enable the ESP32
-     *  - Program it
-     *  - Disable the ESP32
-     *  - Set the boot mode to "normal"
-     *  - Enable the ESP32
-     *
-     * @param filepath The path of the firmware to use, defaulting to "esp32.bin"
-     * @return True if the programming was successful, false otherwise.
+     * Set the user data to send to the ESP if required
+     * @param data byte array to send to the ESP
+     * @param len length of the array
      */
-    bool ProgramEsp(const std::string& filepath = "esp32.bin");
-
-    /**
-     * Sends a packet of data.
-     * @param msg The packet to send
-     * @param len The number of bytes to send.
-     */
-    void Transmit(const char* msg, size_t len);
-
-    /**
-     * Sends a packet of data.
-     * @param msg The packet to send
-     */
-    void Transmit(const std::string& msg);
-
-    /**
-     * Sends a packet of data.
-     * @param msg The packet to send
-     */
-    void Transmit(const std::vector<uint8_t>& msg);
-
-    /**
-     * Gets the number of frames that have not been received yet.
-     * @return The number of packets waiting.
-     */
-    size_t GetNumberOfWaitingFrames() const;
-
-    /**
-     * Receives a frame of data.
-     * @return The received frame
-     */
-    CEP_UART::Frame Receive();
-
-    /**
-     * Sets the number of bytes that are expected to be received.
-     * @param len The number of bytes.
-     */
-    void SetExpectedRxLen(size_t len);
-
-    /**
-     * Resets the number of bytes expected back to zero.
-     */
-    void ClearExpectedRxLen();
-
-    /**
-     * Sets the function that will be called upon receiving a frame.
-     * @param cb The function to call
-     */
-    void SetFrameReceiveCpltCallback(const std::function<void()>& cb);
-
-    /**
-     * Removes the frame received callback.
-     */
-    void ClearFrameReceiveCpltCallback();
-
-    /**
-     * Sets the start of frame identifier sequence.
-     * @param sof The start of frame sequence
-     * @param len The number of bytes contained in the sequence
-     */
-    void SetStartOfFrameSequence(const char* sof, size_t len);
-    void SetStartOfFrameSequence(const std::string& sof);
-    void SetStartOfFrameSequence(const std::vector<uint8_t>& sof);
-
-    /**
-     * Removes the start of frame sequence.
-     */
-    void ClearStartOfFrameSequence();
-
-    /**
-     * Sets the end of frame identifier sequence.
-     * @param eof The end of frame sequence
-     * @param len The number of bytes contained in the sequence
-     */
-    void SetEndOfFrameSequence(const char* eof, size_t len);
-    void SetEndOfFrameSequence(const std::string& eof);
-    void SetEndOfFrameSequence(const std::vector<uint8_t>& eof);
-
-    /**
-     * Removes the end of frame sequence.
-     */
-    void ClearEndOfFrameSequence();
+    void SetUserData(uint8_t* data, size_t len) {
+        m_userData = data;
+        m_dataLen  = len;
+    }
 
   private:
-    std::string     m_label    = "";
-    UartModuleIt*   m_uart     = nullptr;
-    uint8_t*        m_userData = nullptr;
-    size_t          m_dataLen  = 0;
-    CEP_ESP32::Pins m_pins     = {};
-    bool            m_enabled  = false;
+    Pins     m_pins = {};
+    Firmware m_firmware;
+    uint8_t* m_userData = nullptr;
+    size_t   m_dataLen  = 0;
+
 
     static constexpr size_t TIMEOUT = 500;
 
     void SendUserData();
-};
 
+    bool Bootloader();
+
+    bool PrepareFlash();
+
+    bool FlashBinary(size_t address, size_t file_size, size_t block_size, const std::function<size_t(uint8_t*)>& cb);
+};
+}    // namespace Nilai::Interfaces::Esp32
 /**
  * @}
  */

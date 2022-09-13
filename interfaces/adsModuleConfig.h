@@ -321,10 +321,10 @@ enum class CrcEnable
 };
 
 struct Pins {
-    cep::Pin chipSelect;
-    cep::Pin reset;
-    cep::Pin dataReady;
-    cep::Pin done;
+    Nilai::Defines::Pin chipSelect;
+    Nilai::Defines::Pin reset;
+    Nilai::Defines::Pin dataReady;
+    Nilai::Defines::Pin done;
     bool     operator==(const Pins& other) const {
         return (
           (chipSelect == other.chipSelect) && (this->reset == other.reset) && (this->dataReady == other.dataReady)

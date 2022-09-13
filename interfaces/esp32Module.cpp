@@ -15,45 +15,30 @@
 #if !defined(NILAI_USE_UART)
 #error The UART module must be enabled in order to use the ESP32 Module
 #endif
+
 #include "defines/internalConfig.h"
 #include NILAI_HAL_HEADER
+#include "libs/esp-serial-flasher/include/esp_loader.h"
+#include "libs/esp-serial-flasher/port/nilai_port.h"
+#include "shared/services/file.h"
+#include "shared/services/filesystem.h"
 
-#define ESP_DEBUG(msg, ...) LOG_DEBUG("[%s]: " msg, m_label.c_str(), ##__VA_ARGS__)
-#define ESP_INFO(msg, ...)  LOG_INFO("[%s]: " msg, m_label.c_str(), ##__VA_ARGS__)
-#define ESP_WARN(msg, ...)  LOG_WARNING("[%s]: " msg, m_label.c_str(), ##__VA_ARGS__)
-#define ESP_ERROR(msg, ...) LOG_ERROR("[%s]: " msg, m_label.c_str(), ##__VA_ARGS__)
+#define ESP_DEBUG(msg, ...) LOGTD(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
+#define ESP_INFO(msg, ...)  LOGTI(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
+#define ESP_WARN(msg, ...)  LOGTW(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
+#define ESP_ERROR(msg, ...) LOGTE(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
 
-EspModule::EspModule(
-  const std::string&     label,
-  UartModuleIt*          uart,
-  uint8_t*               userData,
-  size_t                 dataLen,
-  const CEP_ESP32::Pins& pins)
-: m_label(label)
-, m_uart(uart)
+namespace Nilai::Interfaces::Esp32 {
+
+Module::Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins)
+: Nilai::Drivers::Uart::Module(label, uart, 4500, 512)
 , m_pins(pins) {
-    CEP_ASSERT(uart != nullptr, "UART handle is NULL!");
+    SetStartOfFrameSequence("\x01\x02");
+    SetEndOfFrameSequence("\x03\x04");
 
-    // Set TPIN to high to allow the ESP to boot.
-    m_pins.tpin.Set(true);
+    loader_port_nilai_init(this, m_pins.enable, m_pins.boot);
 
-    // Enable the ESP32 in normal boot mode.
-    m_pins.enable.Set(false);
-    m_pins.boot.Set(true);
-    m_pins.enable.Set(true);
-
-    m_userData = userData;
-    m_dataLen  = dataLen;
-
-    m_uart->SetExpectedRxLen(512);
-
-    m_uart->SetStartOfFrameSequence("\x01\x02");
-    m_uart->SetEndOfFrameSequence("\x03\x04");
-
-    // Wait for ESP32 to be done booting, which takes around 400ms...
-    HAL_Delay(450);
-
-    ESP_INFO("Initialized.");
+    ESP_INFO("ESP Initialized");
 }
 
 /**
@@ -62,33 +47,20 @@ EspModule::EspModule(
  *  - The ESP must respond with "OK".
  * @return True if the POST passes, false otherwise.
  */
-bool EspModule::DoPost() {
-    // Make sure that TPOUT is high.
-    if (m_pins.tpout.Get() == false) {
-        ESP_ERROR("Error in POST: TPOUT is LOW!");
+bool Module::DoPost() {
+    if (!Bootloader()) {
+        ESP_ERROR("POST: bootloader failure");
         return false;
     }
 
-    SendUserData();
-
-    // Wait for its response.
-    size_t start = HAL_GetTick();
-    HAL_Delay(1);
-    while (m_uart->GetNumberOfWaitingFrames() == 0) {
-        // Data is only processed in the Run function.
-        m_uart->Run();
-        if (HAL_GetTick() >= start + EspModule::TIMEOUT) {
-            // Timed out.
-            ESP_ERROR("Error in POST: No response from ESP!");
-            return false;
-        }
+    if (!Enable(BootMode::Normal)) {
+        ESP_ERROR("POST: Failed to start ESP");
+        return false;
     }
 
-    // We got the response, check it.
-    CEP_UART::Frame resp = m_uart->Receive();
-
-    if (resp != "OK") {
-        ESP_ERROR("Error in POST: Invalid response from ESP! ('%s')", resp.ToStr().c_str());
+    // Make sure that TPOUT is high.
+    if (!m_pins.tpout.Get()) {
+        ESP_ERROR("POST: TPOUT is LOW!");
         return false;
     }
 
@@ -98,144 +70,200 @@ bool EspModule::DoPost() {
     return true;
 }
 
-void EspModule::Run() {
+void Module::Run() {
     // If TPOUT is LOW, there's a problem, reset the ESP.
-    if (m_pins.tpout.Get() == false) {
+    if (!m_pins.tpout.Get()) {
         ESP_WARN("TPOUT is LOW, resetting!");
-        m_pins.enable.Set(false);
-        HAL_Delay(1);
-        m_pins.enable.Set(true);
+        Enable(BootMode::Normal);
+    }
+    Nilai::Drivers::Uart::Module::Run();
+}
+
+bool Module::Enable(BootMode mode) {
+    m_pins.enable.Set(false);
+    m_pins.boot.Set(false);
+    m_pins.tpin.Set(false);
+    HAL_Delay(1);
+
+
+    if (mode == BootMode::Bootloader) {
+        // io2 must be set to false when loading as bootloader
+        // Otherwise, it will power-cycle
+        m_pins.tpin.Set(false);
+        m_pins.boot.Set(false);
+    } else {
+        m_pins.tpin.Set(true);
+        m_pins.boot.Set(true);
+    }
+
+    m_pins.enable.Set(true);
+
+    if (mode == BootMode::Normal) {
+        HAL_Delay(450);
 
         SendUserData();
 
         // Wait for its response.
         size_t start = HAL_GetTick();
-        while (m_uart->GetNumberOfWaitingFrames() == 0) {
-            if (HAL_GetTick() >= start + EspModule::TIMEOUT) {
+        while (AvailableFrames() == 0) {
+            Nilai::Drivers::Uart::Module::Run();
+            if (HAL_GetTick() >= start + Module::TIMEOUT) {
                 // Timed out.
                 ESP_ERROR("No response from ESP!");
-                return;
+                return false;
             }
         }
+    }
+    return true;
+}
 
-        // We got the response, check it.
-        CEP_UART::Frame resp = m_uart->Receive();
+void Module::Disable() {
+    m_pins.enable.Set(false);
+    m_pins.boot.Set(false);
+    m_pins.tpin.Set(false);
+}
 
-        if (resp != "OK") {
-            ESP_ERROR("Invalid response from ESP! ('%s')", resp.data);
-            return;
+void Module::SendUserData() {
+    Transmit((const char*)&m_dataLen,
+             1);    // Report the data size 256 is max length for now
+    if (m_dataLen != 0)
+        Transmit((const char*)m_userData, m_dataLen);    // Send the user data
+}
+
+bool Module::Bootloader() {
+    // No firmware provided, skip procedure
+    if (m_firmware.files.empty())
+        return true;
+
+    cep::Filesystem::fileInfo_t fileInfo;
+    cep::Filesystem::Result     err;
+
+
+    // Check if user put firmware folder
+    err = cep::Filesystem::GetStat(m_firmware.folder, &fileInfo);
+    if (err != cep::Filesystem::Result::Ok) {
+        return true;
+    }
+
+    // Check if all files required are provided
+    bool hasAllFiles = true;
+    for (const auto& file : m_firmware.files) {
+        err = cep::Filesystem::GetStat(file.path, &fileInfo);
+        if (err != cep::Filesystem::Result::Ok) {
+            ESP_ERROR("%s is missing", file.name.c_str());
+            hasAllFiles = false;
         }
     }
-}
-
-void EspModule::Enable() {
-    m_pins.enable.Set(true);
-    m_enabled = true;
-}
-
-void EspModule::Disable() {
-    m_pins.enable.Set(false);
-    m_enabled = false;
-}
-
-void EspModule::SetBootMode(CEP_ESP32::BootMode mode) {
-    switch (mode) {
-        case CEP_ESP32::BootMode::Normal:
-            m_pins.boot.Set(true);
-            break;
-        case CEP_ESP32::BootMode::Bootloader:
-            m_pins.boot.Set(false);
-            break;
-        default:
-            CEP_ASSERT(false, "Invalid boot mode");
-            break;
+    if (!hasAllFiles) {
+        return false;
     }
+
+    // Connect to ESP
+    if (!PrepareFlash()) {
+        return false;
+    }
+
+    // Flash ESP
+    for (const auto& file : m_firmware.files) {
+        cep::Filesystem::File f(file.path, cep::Filesystem::FileModes::Read);
+
+        if (!f.IsOpen()) {
+            ESP_ERROR("Failed to open %s", file.name.c_str());
+            return false;
+        }
+
+        static constexpr size_t blockSize = 4096;
+        if (!FlashBinary(file.address, f.GetSize(), blockSize, [&](uint8_t* payload) {
+                size_t lenRead = 0;
+                err            = f.Read(payload, blockSize, &lenRead);
+                if (err != cep::Filesystem::Result::Ok) {
+                    lenRead = 0;
+                }
+                return lenRead;
+            })) {
+            f.Close();
+            return false;
+        }
+        f.Close();
+        ESP_INFO("Flashed %s", file.name.c_str());
+    }
+
+    err = cep::Filesystem::GetStat(m_firmware.GetNoEraseFilePath(), &fileInfo);
+    if (err != cep::Filesystem::Result::Ok) {
+        ESP_DEBUG("Erasing firmware folder");
+        for (const auto& file : m_firmware.files) {
+            err = cep::Filesystem::Unlink(file.path.c_str());
+            if (err != cep::Filesystem::Result::Ok) {
+                ESP_ERROR("Failed to delete folder");
+                return false;
+            }
+        }
+        err = cep::Filesystem::Unlink(m_firmware.folder.c_str());
+        if (err != cep::Filesystem::Result::Ok) {
+            ESP_ERROR("Failed to delete folder");
+            return false;
+        }
+    }
+
+    return true;
 }
 
-bool EspModule::ProgramEsp(const std::string& filepath) {
-#if !defined(NILAI_USE_FILESYSTEM)
-    UNUSED(filepath);
-    CEP_ASSERT(false, "The SD module must be enabled to use this function");
-    return false;
-#else
-    UNUSED(filepath);
-#warning Implement EspModule::ProgramEsp!
-    return false;
-#endif
+bool Module::PrepareFlash() {
+    // Disable ESP and reset its pins to default state
+    Disable();
+
+    // Connect to target
+    esp_loader_connect_args_t connect_config = ESP_LOADER_CONNECT_DEFAULT();
+    esp_loader_error_t        err            = esp_loader_connect(&connect_config);
+    if (err != ESP_LOADER_SUCCESS) {
+        ESP_ERROR("Cannot connect to target, Error: %u", err);
+        return false;
+    }
+    ESP_DEBUG("Connected to target");
+    return true;
 }
 
-void EspModule::Transmit(const char* msg, size_t len) {
-    m_uart->Transmit(msg, len);
-}
+bool Module::FlashBinary(
+  size_t                                         address,
+  size_t                                         file_size,
+  size_t                                         block_size,
+  const std::function<size_t(uint8_t* payload)>& cb) {
+    esp_loader_error_t err;
+    ESP_DEBUG("Erasing flash");
+    err = esp_loader_flash_start(address, file_size, block_size);
+    if (err != ESP_LOADER_SUCCESS) {
+        ESP_ERROR("Erasing flash failed with error %d", err);
+        return false;
+    }
+    ESP_DEBUG("Start programming");
 
-void EspModule::Transmit(const std::string& msg) {
-    m_uart->Transmit(msg);
-}
+    uint8_t payload[block_size];
+    size_t  last_block_size;
+    size_t  written = 0;
+    do {
+        Logger::Log("Flashing %02d%% [%d/%d]\r", written * 100 / file_size, written, file_size);
+        last_block_size = cb(payload);
+        if (last_block_size == 0) {
+            ESP_ERROR("Failure when loading binary from source");
+            return false;
+        }
+        err = esp_loader_flash_write(payload, last_block_size);
+        if (err != ESP_LOADER_SUCCESS) {
+            ESP_ERROR("Packet could not be written! error %d", err);
+            return false;
+        }
+        written += last_block_size;
+    } while (written < file_size);
+    ESP_DEBUG("Finished programming");
 
-void EspModule::Transmit(const std::vector<uint8_t>& msg) {
-    m_uart->Transmit(msg);
+    err = esp_loader_flash_verify();
+    if (err != ESP_LOADER_SUCCESS) {
+        ESP_ERROR("MD5 does not match. err: %d", err);
+        return false;
+    }
+    ESP_DEBUG("Flash verified");
+    return true;
 }
-
-size_t EspModule::GetNumberOfWaitingFrames() const {
-    return m_uart->GetNumberOfWaitingFrames();
-}
-
-CEP_UART::Frame EspModule::Receive() {
-    return m_uart->Receive();
-}
-
-void EspModule::SetExpectedRxLen(size_t len) {
-    m_uart->SetExpectedRxLen(len);
-}
-
-void EspModule::ClearExpectedRxLen() {
-    m_uart->ClearExpectedRxLen();
-}
-
-void EspModule::SetFrameReceiveCpltCallback(const std::function<void()>& cb) {
-    m_uart->SetFrameReceiveCpltCallback(cb);
-}
-
-void EspModule::ClearFrameReceiveCpltCallback() {
-    m_uart->ClearFrameReceiveCpltCallback();
-}
-
-void EspModule::SetStartOfFrameSequence(const char* sof, size_t len) {
-    m_uart->SetStartOfFrameSequence(const_cast<uint8_t*>((const uint8_t*)sof), len);
-}
-
-void EspModule::SetStartOfFrameSequence(const std::string& sof) {
-    m_uart->SetStartOfFrameSequence(sof);
-}
-
-void EspModule::SetStartOfFrameSequence(const std::vector<uint8_t>& sof) {
-    m_uart->SetStartOfFrameSequence(sof);
-}
-
-void EspModule::ClearStartOfFrameSequence() {
-    m_uart->ClearStartOfFrameSequence();
-}
-
-void EspModule::SetEndOfFrameSequence(const char* eof, size_t len) {
-    m_uart->SetEndOfFrameSequence(const_cast<uint8_t*>((const uint8_t*)eof), len);
-}
-
-void EspModule::SetEndOfFrameSequence(const std::string& eof) {
-    m_uart->SetEndOfFrameSequence(eof);
-}
-
-void EspModule::SetEndOfFrameSequence(const std::vector<uint8_t>& eof) {
-    m_uart->SetEndOfFrameSequence(eof);
-}
-
-void EspModule::ClearEndOfFrameSequence() {
-    m_uart->ClearEndOfFrameSequence();
-}
-
-void EspModule::SendUserData() {
-    m_uart->Transmit((const char*)&m_dataLen, 1);    // Report the data size 256 is max length for now
-    if (m_dataLen != 0)
-        m_uart->Transmit((const char*)m_userData, m_dataLen);    // Send the user data
-}
+}    // namespace Nilai::Interfaces::Esp32
 
 #endif

@@ -93,9 +93,9 @@ struct Config {
     I2cModule* i2c = nullptr;
     //! Set by hardware, between 0x40 and 0x4E.
     uint8_t                address      = 0x40;
-    cep::Pin               outputEnable = {};
-    cep::Pin               interrupt    = {};
-    cep::Pin               reset        = {};
+    Nilai::Defines::Pin               outputEnable = {};
+    Nilai::Defines::Pin               interrupt    = {};
+    Nilai::Defines::Pin               reset        = {};
     std::vector<PinConfig> pinConfig    = {};
 };
 
@@ -148,9 +148,9 @@ class Pca9505Module : public cep::Module {
     uint8_t     m_address;
     std::string m_label;
 
-    cep::Pin                          m_outputEnable;
-    cep::Pin                          m_interrupt;
-    cep::Pin                          m_reset;
+    Nilai::Defines::Pin                          m_outputEnable;
+    Nilai::Defines::Pin                          m_interrupt;
+    Nilai::Defines::Pin                          m_reset;
     std::array<PCA9505::PortState, 5> m_ports;
     std::array<uint8_t, 5>            m_directions;
     std::array<uint8_t, 5>            m_polarities;

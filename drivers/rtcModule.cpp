@@ -165,7 +165,7 @@ RtcModule::RtcModule(RTC_HandleTypeDef* handle, const std::string& label)
 
     s_instance = this;
 
-    LOG_INFO("[%s]: Initialized", m_label.c_str());
+    LOGTI(m_label.c_str(), "Initialized");
 }
 
 /**
@@ -186,12 +186,12 @@ bool RtcModule::DoPost()
 
     if ((secondTime >= firstTime + 1) && (secondTime <= firstTime + 3))
     {
-        LOG_INFO("[RTC]: POST OK");
+        LOGTI(m_label.c_str(), "POST OK");
         return true;
     }
     else
     {
-        LOG_ERROR("[RTC]: POST ERROR! (first: %i, second: %i)", firstTime, secondTime);
+        LOGTE(m_label.c_str(), "POST ERROR! (first: %i, second: %i)", firstTime, secondTime);
         return false;
     }
 }
@@ -206,7 +206,7 @@ void RtcModule::SetTime(const CEP_RTC::Time& time)
 
     if (HAL_RTC_SetTime(m_handle, &newTime, RTC_FORMAT_BIN) != HAL_OK)
     {
-        LOG_ERROR("[%s]: Unable to set the time!", m_label.c_str());
+        LOGTE(m_label.c_str(), "Unable to set the time!");
     }
 }
 
@@ -216,7 +216,7 @@ CEP_RTC::Time RtcModule::GetTime()
 
     if (HAL_RTC_GetTime(m_handle, &halTime, RTC_FORMAT_BIN) != HAL_OK)
     {
-        LOG_ERROR("[%s]: Unable to get the time!", m_label.c_str());
+        LOGTE(m_label.c_str(), "Unable to get the time!" );
     }
 
     // We must always also read the date after reading the time.
@@ -232,7 +232,7 @@ void RtcModule::SetDate(const CEP_RTC::Date& date)
 
     if (HAL_RTC_SetDate(m_handle, &newDate, RTC_FORMAT_BIN) != HAL_OK)
     {
-        LOG_ERROR("[%s]: Unable to set the date!", m_label.c_str());
+        LOGTE(m_label.c_str(), "Unable to set the date!" );
     }
 }
 
@@ -246,7 +246,7 @@ CEP_RTC::Date RtcModule::GetDate()
     RTC_DateTypeDef halDate = {};
     if (HAL_RTC_GetDate(m_handle, &halDate, RTC_FORMAT_BIN) != HAL_OK)
     {
-        LOG_ERROR("[%s]: Unable to get the date!", m_label.c_str());
+        LOGTE(m_label.c_str(), "Unable to get the date!" );
     }
 
     return CEP_RTC::Date(halDate);

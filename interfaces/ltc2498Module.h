@@ -153,8 +153,8 @@ class Ltc2498Module : public cep::Module {
     Ltc2498Module(
       const std::string& label,
       SpiModule*         spi,
-      const cep::Pin&    inPin,
-      const cep::Pin&    csPin,
+      const Nilai::Defines::Pin&    inPin,
+      const Nilai::Defines::Pin&    csPin,
       float              vcom = 0.00f);
     virtual ~Ltc2498Module() override = default;
 
@@ -173,8 +173,8 @@ class Ltc2498Module : public cep::Module {
   private:
     std::string m_label   = "";
     SpiModule*  m_spi     = nullptr;
-    cep::Pin    m_misoPin = {};
-    cep::Pin    m_csPin   = {};
+    Nilai::Defines::Pin    m_misoPin = {};
+    Nilai::Defines::Pin    m_csPin   = {};
     float       m_vcom    = 0.00f;
 
     std::vector<LTC2498::ConversionSettings> m_conversions       = {};

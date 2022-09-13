@@ -33,8 +33,7 @@ using dir_t      = DIR;
 using fileInfo_t = FILINFO;
 
 
-enum class Result
-{
+enum class Result {
     Ok               = FR_OK,
     DiskError        = FR_DISK_ERR,
     IntErr           = FR_INT_ERR,
@@ -58,8 +57,7 @@ enum class Result
 };
 
 
-enum class CodePages
-{
+enum class CodePages {
     // TODO http://elm-chan.org/fsw/ff/doc/setcp.html
 };
 
@@ -69,7 +67,7 @@ struct MakeVolumeParams {
 };
 
 
-bool   Init(const cep::Pin& detect);
+bool   Init(const Nilai::Defines::Pin& detect);
 void   Deinit();
 Result Mount(const std::string& drive = "", bool forceMount = false);
 Result Unmount();
@@ -89,6 +87,7 @@ Result CloseDir(dir_t* dir);
 Result ReadDir(dir_t* dir, fileInfo_t* outInfo);
 Result FindFirst(dir_t* outDir, fileInfo_t* outInfo, const std::string& dirPath, const std::string& pattern = "");
 Result FindNext(dir_t* dir, fileInfo_t* outInfo);
+Result ChangeDir(const std::string& path);
 
 Result GetStat(const std::string& path, fileInfo_t* outInfo);
 
@@ -98,7 +97,7 @@ Result Unlink(const std::string& path);
 Result Utime(const std::string& path, const fileInfo_t* fno);
 
 std::string ResultToStr(Result res);
-};    // namespace Filesystem
+}    // namespace Filesystem
 }    // namespace cep
 
 

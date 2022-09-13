@@ -25,7 +25,7 @@ I2cModule::I2cModule(I2C_HandleTypeDef* handle, std::string  label)
 : m_handle(handle), m_label(std::move(label))
 {
     CEP_ASSERT(handle != nullptr, "In I2cModule: handle is NULL!");
-    LOG_INFO("[%s]: Initialized", m_label.c_str());
+    LOGTI(m_label.c_str(), "Initialized");
 }
 
 /**
@@ -34,7 +34,7 @@ I2cModule::I2cModule(I2C_HandleTypeDef* handle, std::string  label)
  */
 bool I2cModule::DoPost()
 {
-    LOG_INFO("[%s]: POST OK", m_label.c_str());
+    LOGTI(m_label.c_str(), "POST OK!");
     return true;
 }
 
@@ -50,7 +50,7 @@ void I2cModule::TransmitFrame(uint8_t addr, const uint8_t* data, size_t len)
                                 (uint16_t)len,
                                 I2cModule::TIMEOUT) != HAL_OK)
     {
-        LOG_ERROR("[%s]: In TransmitFrame, unable to transmit frame", m_label.c_str());
+        LOGTE(m_label.c_str(), "In TransmitFrame, unable to transmit frame");
     }
 }
 
@@ -67,7 +67,7 @@ void I2cModule::TransmitFrameToRegister(uint8_t        addr,
                           (uint16_t)len,
                           I2cModule::TIMEOUT) != HAL_OK)
     {
-        LOG_ERROR("[%s]: In TransmitFrameToRegister, unable to transmit frame", m_label.c_str());
+        LOGTE(m_label.c_str(), "In TransmitFrameToRegister, unable to transmit frame", m_label.c_str());
     }
 }
 
@@ -85,7 +85,7 @@ CEP_I2C::Frame I2cModule::ReceiveFrame(uint8_t addr, size_t len)
                                (uint16_t)frame.data.size(),
                                I2cModule::TIMEOUT) != HAL_OK)
     {
-        LOG_ERROR("[%s]: In ReceiveFrame, unable to receive frame", m_label.c_str());
+        LOGTE(m_label.c_str(), "In ReceiveFrame, unable to receive frame");
     }
 
     return frame;
@@ -107,7 +107,7 @@ CEP_I2C::Frame I2cModule::ReceiveFrameFromRegister(uint8_t addr, uint8_t regAddr
                          (uint16_t)frame.data.size(),
                          I2cModule::TIMEOUT) != HAL_OK)
     {
-        LOG_ERROR("[%s]: In ReceiveFrameFromRegister, unable to receive frame", m_label.c_str());
+        LOGTE(m_label.c_str(), "In ReceiveFrameFromRegister, unable to receive frame");
     }
 
     return frame;

@@ -24,7 +24,7 @@ extern "C"
 #if defined(NILAI_USE_LOGGER)
         if (shouldPrint == 1)
         {
-            LOG_CRITICAL("An assertion failed: line %i, %s", line, file);
+            LOGF("An assertion failed: line %i, %s", line, file);
         }
 #endif
         while (true)

@@ -37,7 +37,7 @@ SpiModule::SpiModule(SPI_HandleTypeDef* handle, const std::string& label)
 : m_label(label), m_handle(handle)
 {
     CEP_ASSERT(handle != nullptr, "SPI Handle is NULL!");
-    LOG_INFO("[%s]: Initialized", m_label.c_str());
+    LOGTI(m_label.c_str(), "Initialized" );
 }
 
 SpiModule::~SpiModule()
@@ -63,7 +63,7 @@ SpiModule::~SpiModule()
  */
 bool SpiModule::DoPost()
 {
-    LOG_INFO("[%s]: POST OK", m_label.c_str());
+    LOGTI(m_label.c_str(), "POST OK!");
     return true;
 }
 
@@ -163,36 +163,36 @@ void SpiModule::ErrorHandler()
 {
     if ((m_status & CEP_SPI::Status::MODF) != CEP_SPI::Status::NONE)
     {
-        LOG_ERROR("SPI MODF error");
+        LOGE("SPI MODF error");
     }
     if ((m_status & CEP_SPI::Status::CRC_ERROR) != CEP_SPI::Status::NONE)
     {
-        LOG_ERROR("SPI CRC error");
+        LOGE("SPI CRC error");
     }
     if ((m_status & CEP_SPI::Status::OVR) != CEP_SPI::Status::NONE)
     {
-        LOG_ERROR("SPI OVR error");
+        LOGE("SPI OVR error");
     }
     if ((m_status & CEP_SPI::Status::DMA) != CEP_SPI::Status::NONE)
     {
-        LOG_ERROR("SPI FRE error");
+        LOGE("SPI FRE error");
     }
     if ((m_status & CEP_SPI::Status::FLAG) != CEP_SPI::Status::NONE)
     {
-        LOG_ERROR("SPI FLAG error");
+        LOGE("SPI FLAG error");
     }
     if ((m_status & CEP_SPI::Status::ABORT) != CEP_SPI::Status::NONE)
     {
-        LOG_ERROR("SPI ABORT state");
+        LOGE("SPI ABORT state");
     }
 
     if ((m_status & CEP_SPI::Status::NOT_INIT) != CEP_SPI::Status::NONE)
     {
-        LOG_ERROR("SPI module is not initialized");
+        LOGE("SPI module is not initialized");
     }
     if ((m_status & CEP_SPI::Status::TIMEOUT) != CEP_SPI::Status::NONE)
     {
-        LOG_ERROR("SPI timeout error");
+        LOGE("SPI timeout error");
     }
 
     m_status = CEP_SPI::Status::NONE;

@@ -21,8 +21,8 @@
 
 #    include <limits>
 
-#    define ADS_INFO(msg, ...)  LOG_INFO("[%s] " msg, m_label.c_str( ), ##__VA_ARGS__)
-#    define ADS_ERROR(msg, ...) LOG_ERROR("[%s] " msg, m_label.c_str( ), ##__VA_ARGS__)
+#    define ADS_INFO(msg, ...)  LOG_INFO("[%s] " msg, m_label.c_str( ) __VA_OPT__(,) __VA_ARGS__)
+#    define ADS_ERROR(msg, ...) LOG_ERROR("[%s] " msg, m_label.c_str( ) __VA_OPT__(,) __VA_ARGS__)
 
 AdsModule::AdsModule(SpiModule* spi, const std::string& label)
     : m_spi(spi), m_label(label), m_config(ADS::Config( ))

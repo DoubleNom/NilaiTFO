@@ -14,7 +14,7 @@
 
 #include "defines/macros.hpp"
 #if defined(NILAI_USE_UART)
-#include "drivers/uart/it.hpp"
+#include "drivers/uart/module.hpp"
 #endif
 
 #include <cstdarg>
@@ -23,7 +23,7 @@
 Logger* Logger::s_instance = nullptr;
 
 #if defined(NILAI_USE_UART)
-Logger::Logger(UartModuleIt* uart, const LogFunc& logFunc) {
+Logger::Logger(Nilai::Drivers::Uart::Module* uart, const LogFunc& logFunc) {
     CEP_ASSERT(s_instance == nullptr, "Can only have one instance of Logger!");
     s_instance = this;
     m_uart     = uart;
@@ -55,15 +55,24 @@ void Logger::Log(const char* fmt, ...) {
 }
 
 void Logger::VLog(const char* fmt, va_list args) {
+    if (s_instance == nullptr)
+        return;
+    if (s_instance->m_uart == nullptr)
+        return;
+
     static char buff[1024] = {0};
 
     size_t s = vsnprintf(buff, sizeof_array(buff), fmt, args);
 
     CEP_ASSERT(s < sizeof_array(buff), "vsnprintf error!");
 #if defined(NILAI_USE_UART)
-    if (m_uart != nullptr) { m_uart->Transmit(buff, s); }
+    if (s_instance->m_uart != nullptr) {
+        s_instance->m_uart->Transmit(buff, s);
+    }
 #endif
-    if (m_logFunc) { m_logFunc(buff, s); }
+    if (s_instance->m_logFunc) {
+        s_instance->m_logFunc(buff, s);
+    }
 }
 
 #endif

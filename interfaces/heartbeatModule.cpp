@@ -15,14 +15,14 @@
 #if defined(NILAI_USE_HEARTBEAT)
 #include "services/logger.hpp"
 
-HeartbeatModule::HeartbeatModule(const cep::Pin& pin, std::string  label)
+HeartbeatModule::HeartbeatModule(const Nilai::Defines::Pin& pin, std::string  label)
 : m_label(std::move(label)), m_led(pin)
 {
 }
 
 bool HeartbeatModule::DoPost()
 {
-    LOG_INFO("[%s]: POST OK", m_label.c_str());
+    LOGTI(m_label.c_str(), "POST OK!");
     return true;
 }
 

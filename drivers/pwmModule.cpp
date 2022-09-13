@@ -31,7 +31,7 @@ PwmModule::PwmModule(TIM_HandleTypeDef* timer, PWM::Channels channel, const std:
  */
 bool PwmModule::DoPost()
 {
-    LOG_INFO("[%s]: POST OK", m_label.c_str());
+    LOGTI(m_label.c_str(), "POST OK!");
     return true;
 }
 

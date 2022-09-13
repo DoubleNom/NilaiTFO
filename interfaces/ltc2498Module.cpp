@@ -14,8 +14,8 @@
 #if defined(NILAI_USE_LTC2498) && defined(NILAI_USE_SPI)
 #include "services/logger.hpp"
 
-#define LTC_INFO(msg, ...)  LOG_INFO("[%s]: " msg, m_label.c_str(), ##__VA_ARGS__)
-#define LTC_ERROR(msg, ...) LOG_ERROR("[%s]: " msg, m_label.c_str(), ##__VA_ARGS__)
+#define LTC_INFO(msg, ...)  LOGTI(m_label.c_str(), msg __VA_OPT__(,) __VA_ARGS__)
+#define LTC_ERROR(msg, ...) LOGTE(m_label.c_str(), msg __VA_OPT__(,) __VA_ARGS__)
 
 namespace LTC2498 {
 std::array<uint8_t, 4> ConversionSettings::ToRegValues() const {
@@ -36,11 +36,11 @@ std::array<uint8_t, 4> ConversionSettings::ToRegValues() const {
 }    // namespace LTC2498
 
 Ltc2498Module::Ltc2498Module(
-  const std::string& label,
-  SpiModule*         spi,
-  const cep::Pin&    inPin,
-  const cep::Pin&    csPin,
-  float              vcom)
+  const std::string&         label,
+  SpiModule*                 spi,
+  const Nilai::Defines::Pin& inPin,
+  const Nilai::Defines::Pin& csPin,
+  float                      vcom)
 : m_label(label)
 , m_spi(spi)
 , m_misoPin(inPin)
@@ -136,7 +136,9 @@ void Ltc2498Module::Run() {
         std::array<uint8_t, 4> resp = SetNextConvAndReadResults(nextConversion);
 
         ParseConversionResult(resp, lastConf);
-        if (callback) { callback(m_lastReading.reading, lastConf); }
+        if (callback) {
+            callback(m_lastReading.reading, lastConf);
+        }
         SetMisoAsGpio();
     }
 }
@@ -311,7 +313,9 @@ void Ltc2498Module::ParseConversionResult(
     } else {
         // In the case of a differential conversion, it was observed that if V+'s voltage is under
         // V-'s, the measured voltage is equal to `-5.0 + abs(V+ - V-)`.
-        if (value < 0.0f) { value = -5.0f - value; }
+        if (value < 0.0f) {
+            value = -5.0f - value;
+        }
     }
 
     m_lastReading.reading = value;

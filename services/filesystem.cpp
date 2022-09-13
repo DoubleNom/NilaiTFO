@@ -18,11 +18,12 @@
 #define ASSERT_FS() CEP_ASSERT(s_data.fs != nullptr, "File system is not ready!");
 #define CHECK_IF_READY()                                                                                               \
     do {                                                                                                               \
-        if (s_data.isInit == false) return Result::NotReady;                                                           \
+        if (s_data.isInit == false)                                                                                    \
+            return Result::NotReady;                                                                                   \
     } while (0)
 
 struct FsData {
-    cep::Pin sdPin;
+    Nilai::Defines::Pin sdPin;
     char     sdPath[4];    //!< SD logical drive path.
     FATFS*   fs        = nullptr;
     bool     isInit    = false;
@@ -33,7 +34,7 @@ static FsData s_data;
 
 namespace cep {
 namespace Filesystem {
-bool Init(const cep::Pin& pin) {
+bool Init(const Nilai::Defines::Pin& pin) {
     s_data.sdPin = pin;
     s_data.fs    = new FATFS;
     CEP_ASSERT(s_data.fs != nullptr, "Unable to allocate memory for file system!");
@@ -62,7 +63,9 @@ Result Mount(const std::string& drive, bool forceMount) {
     // Wait a tiny bit to make sure that the SD card is properly powered.
     HAL_Delay(5);
     Result r = (Result)f_mount(s_data.fs, drive.c_str(), (BYTE)forceMount);
-    if (r == Result::Ok) { s_data.isMounted = true; }
+    if (r == Result::Ok) {
+        s_data.isMounted = true;
+    }
 
     return r;
 }
@@ -77,7 +80,9 @@ Result Unmount() {
 
         // Mounting null is how you unmount a disk.
         Result r = (Result)f_mount(s_data.fs, "", 0);
-        if (r == Result::Ok) { s_data.isMounted = false; }
+        if (r == Result::Ok) {
+            s_data.isMounted = false;
+        }
         return r;
     }
 }
@@ -209,6 +214,18 @@ Result FindNext(dir_t* dir, fileInfo_t* outInfo) {
 #endif
 }
 
+Result ChangeDir(const std::string& path) {
+#if _FS_RPATH >= 1
+    CHECK_IF_READY();
+
+    return (Result)f_chdir(path.c_str());
+#else
+    UNUSED(path);
+    CEP_ASSERT(false, "Function not enabled!");
+    return Result::NotEnabled;
+#endif
+}
+
 Result GetStat(const std::string& path, fileInfo_t* outInfo) {
 #if _FS_MINIMIZE == 0
     CHECK_IF_READY();
@@ -261,27 +278,48 @@ Result Utime(const std::string& path, const fileInfo_t* fno) {
 
 std::string ResultToStr(Result res) {
     switch (res) {
-        case Result::Ok: return "OK";
-        case Result::DiskError: return "Disk Error";
-        case Result::IntErr: return "FATFS Internal Error";
-        case Result::NotReady: return "Storage device not ready";
-        case Result::NoFile: return "File not found";
-        case Result::NoPath: return "Path not found";
-        case Result::InvalidName: return "Path name not valid";
-        case Result::Denied: return "Access denied";
-        case Result::Exist: return "Object already exists";
-        case Result::InvalidObject: return "Invalid object";
-        case Result::WriteProtected: return "The media is write-protected";
-        case Result::InvalidDrive: return "Invalid drive number";
-        case Result::NotEnabled: return "Work area for the logical drive has not been mounted";
-        case Result::NoFilesystem: return "No valid FAT volume found";
-        case Result::MkfsAborted: return "Format aborted";
-        case Result::Timeout: return "Timed out";
-        case Result::Locked: return "Operation rejected by file sharing control";
-        case Result::NotEnoughCore: return "Not enough memory";
-        case Result::TooManyOpenFiles: return "Too many open files";
-        case Result::InvalidParameter: return "Invalid Parameter";
-        default: return "Unknown error";
+        case Result::Ok:
+            return "OK";
+        case Result::DiskError:
+            return "Disk Error";
+        case Result::IntErr:
+            return "FATFS Internal Error";
+        case Result::NotReady:
+            return "Storage device not ready";
+        case Result::NoFile:
+            return "File not found";
+        case Result::NoPath:
+            return "Path not found";
+        case Result::InvalidName:
+            return "Path name not valid";
+        case Result::Denied:
+            return "Access denied";
+        case Result::Exist:
+            return "Object already exists";
+        case Result::InvalidObject:
+            return "Invalid object";
+        case Result::WriteProtected:
+            return "The media is write-protected";
+        case Result::InvalidDrive:
+            return "Invalid drive number";
+        case Result::NotEnabled:
+            return "Work area for the logical drive has not been mounted";
+        case Result::NoFilesystem:
+            return "No valid FAT volume found";
+        case Result::MkfsAborted:
+            return "Format aborted";
+        case Result::Timeout:
+            return "Timed out";
+        case Result::Locked:
+            return "Operation rejected by file sharing control";
+        case Result::NotEnoughCore:
+            return "Not enough memory";
+        case Result::TooManyOpenFiles:
+            return "Too many open files";
+        case Result::InvalidParameter:
+            return "Invalid Parameter";
+        default:
+            return "Unknown error";
     }
 }
 
