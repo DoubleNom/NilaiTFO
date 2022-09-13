@@ -31,11 +31,8 @@
 namespace Nilai::Interfaces::Esp32 {
 
 Module::Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins)
-: Nilai::Drivers::Uart::Module(label, uart, 4500, 512)
+: Nilai::Drivers::Uart::Module(label, uart, 4500, 256)
 , m_pins(pins) {
-    SetStartOfFrameSequence("\x01\x02");
-    SetEndOfFrameSequence("\x03\x04");
-
     loader_port_nilai_init(this, m_pins.enable, m_pins.boot);
 
     ESP_INFO("ESP Initialized");
@@ -99,6 +96,9 @@ bool Module::Enable(BootMode mode) {
     m_pins.enable.Set(true);
 
     if (mode == BootMode::Normal) {
+        SetStartOfFrameSequence("\x01\x02");
+        SetEndOfFrameSequence("\x03\x04");
+
         HAL_Delay(450);
 
         SendUserData();
@@ -112,6 +112,12 @@ bool Module::Enable(BootMode mode) {
                 ESP_ERROR("No response from ESP!");
                 return false;
             }
+        }
+        Nilai::Drivers::Uart::Frame frame = Receive();
+        std::string                 reply = std::string(frame.data.begin(), frame.data.end());
+        if (reply != "OK") {
+            ESP_ERROR("Invalid response from ESP! %s", reply.c_str());
+            return false;
         }
     }
     return true;

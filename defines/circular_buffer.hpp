@@ -2,6 +2,7 @@
 #define CIRCULAR_BUFFER_HPP
 
 #include <cstdlib>
+#include <cstdint>
 #include <vector>
 
 template<typename T>
@@ -72,17 +73,11 @@ class CircularBuffer {
      * effectively removing the n first elements of the buffer
      */
     void pop(size_t n) {
-        if (n >= size())    // if we want to remove more elements that we stored,
-                            // clear will be enough
-            clear();
-        else {
-            while (n >= m_capacity)
-                n -= m_capacity;
-            m_read += n;
-            m_size -= n;
-            while (m_read >= m_capacity)
-                m_read -= m_capacity;
-        }
+        if(n >= m_capacity) n = m_capacity;
+        m_read += n;
+        m_size -= n;
+        while (m_read >= m_capacity)
+            m_read -= m_capacity;
     }
 
     /**
@@ -126,7 +121,7 @@ class CircularBuffer {
         if (len <= 0 || m_size < len)
             len = m_size;
         for (size_t i = 0; i < len; ++i) {
-            buff[i] = m_c[m_read + i];
+            buff[i] = (*this)[i];
         }
         m_read = next(m_read + len - 1);
         m_size -= len;
@@ -142,7 +137,7 @@ class CircularBuffer {
         if (len <= 0 || m_size < len)
             len = m_size;
         for (size_t i = 0; i < len; ++i) {
-            buff[i] = m_c[m_read + i];
+            buff[i] = (*this)[i];
         }
         return len;
     }
@@ -241,11 +236,11 @@ class CircularBuffer {
     bool   m_external = false;
     size_t m_capacity;    // Cannot be const, because we want default operator=
     // This is used so we have different sized buffer
-    size_t m_read  = 0;
-    size_t m_write = 0;
+    int32_t m_read  = 0;
+    int32_t m_write = 0;
     size_t m_size  = 0;
 
-    size_t m_lastDmaCounter = 0;
+    int32_t m_lastDmaCounter = 0;
 
     size_t next(size_t origin) const {
         size_t r = origin + 1;

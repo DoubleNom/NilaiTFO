@@ -48,9 +48,18 @@ Module::Module(const std::string& label, UART_HandleTypeDef* uart, size_t txl, s
     m_sof.reserve(2);
     m_eof.reserve(2);
 
+    if (uart->hdmarx != nullptr) {
+        m_run = [&]() {
+            m_rxCirc.dmaCounter(__HAL_DMA_GET_COUNTER(m_handle->hdmarx));
+            m_triage();
+        };
+    } else {
+        m_run = []() {
+        };
+    }
     m_triage = []() {
     };
-    m_cb = [](){
+    m_cb = []() {
     };
     HAL_UART_Receive_DMA(m_handle, m_rxBuff.data(), rxl);
     //    __HAL_UART_ENABLE_IT(m_handle, UART_IT_RXNE);
@@ -71,10 +80,7 @@ bool Module::DoPost() {
 }
 
 void Module::Run() {
-    size_t len = m_rxCirc.dmaCounter(__HAL_DMA_GET_COUNTER(m_handle->hdmarx));
-    if (len != 0) {
-        m_triage();
-    }
+    m_run();
 }
 
 void Module::Transmit(const char* msg, size_t len) {
@@ -272,10 +278,15 @@ bool Module::ResizeDmaBuffer() {
 }
 
 void Module::SetTriage() {
-    static constexpr size_t    lim_xof = 5;
+    static constexpr size_t lim_xof    = 5;
+    bool                    isSofEmpty = m_sof.empty();
+    bool                    isEofEmpty = m_eof.empty();
+    size_t                  sofLength  = m_sof.length();
+    size_t                  eofLength  = m_eof.length();
 
     // LEN
     if (m_efl != 0) {
+        LOGTI(m_label.c_str(), "Triage: LEN");
         m_triage = [&]() {
             while (m_efl <= m_rxCirc.size()) {
                 std::vector<uint8_t> data;
@@ -288,9 +299,10 @@ void Module::SetTriage() {
     }
     // SOF
     else if (!m_sof.empty() && m_eof.empty()) {
+        LOGTI(m_label.c_str(), "Triage: SOF");
         m_triage = [&]() {
             std::vector<uint8_t> data(m_rxCirc.size());
-            std::vector<size_t> sofs;
+            std::vector<size_t>  sofs;
             m_rxCirc.peek(data.data(), m_rxCirc.size());
             SearchFrame(data, std::vector<uint8_t>{m_sof.begin(), m_sof.end()}, sofs, lim_xof);
 
@@ -308,9 +320,10 @@ void Module::SetTriage() {
     }
     // EOF
     else if (m_sof.empty() && !m_eof.empty()) {
+        LOGTI(m_label.c_str(), "Triage: EOF");
         m_triage = [&]() {
             std::vector<uint8_t> data(m_rxCirc.size());
-            std::vector<size_t> eofs;
+            std::vector<size_t>  eofs;
             data.resize(m_rxCirc.size());
             m_rxCirc.peek(data.data(), m_rxCirc.size());
             SearchFrame(data, {m_eof.begin(), m_eof.end()}, eofs, lim_xof);
@@ -328,10 +341,11 @@ void Module::SetTriage() {
     }
     // SOF & EOF
     else if (!m_sof.empty() && !m_eof.empty()) {
+        LOGTI(m_label.c_str(), "Triage: SOF&EOF");
         m_triage = [&]() {
             std::vector<uint8_t> data(m_rxCirc.size());
-            std::vector<size_t> sofs;
-            std::vector<size_t> eofs;
+            std::vector<size_t>  sofs;
+            std::vector<size_t>  eofs;
             data.resize(m_rxCirc.size());
             m_rxCirc.peek(data.data(), m_rxCirc.size());
             SearchFrame(data, {m_sof.begin(), m_sof.end()}, sofs, lim_xof);

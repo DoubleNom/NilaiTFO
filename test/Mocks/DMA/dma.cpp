@@ -10,10 +10,12 @@ uint32_t __HAL_DMA_GET_COUNTER(DMA_HandleTypeDef* handle) {
 }
 
 void __NILAI_DMA_SET_COUNTER(DMA_HandleTypeDef* handle, size_t count) {
-    handle->counter = 0;
+    handle->counter = count;
 }
 
 void __NILAI_DMA_DEC_COUNTER(DMA_HandleTypeDef* handle, size_t count) {
     handle->counter -= count;
-    if(handle->counter < 0) handle->counter += handle->capacity;
+    while(handle->counter <= 0) {
+        handle->counter += handle->capacity;
+    }
 }

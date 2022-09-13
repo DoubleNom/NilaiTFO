@@ -147,7 +147,7 @@ class Module : public cep::Module {
       size_t               offset    = 0);
 
   protected:
-    std::string          m_label;
+    std::string m_label;
 
   private:
     UART_HandleTypeDef* m_handle = nullptr;
@@ -163,27 +163,31 @@ class Module : public cep::Module {
 
     size_t                  m_sBuffId = 0;    // Static buffer id
     std::vector<uint8_t>    m_txBuff;         // transmission buffer
-    std::vector<uint8_t>    m_rxBuff;    // reception buffer
+    std::vector<uint8_t>    m_rxBuff;         // reception buffer
     CircularBuffer<uint8_t> m_rxCirc;         // circular read access for reception buffer
     CircularBuffer<Frame>   m_rxFrames;       // reception frame buffer
 
     std::function<void()> m_cb;
 
+    std::function<void()> m_run;
+
     // Triage
     std::function<void()> m_triage;
+
 
     static constexpr uint32_t TX_TIMEOUT = 100;    // Systicks.
     static constexpr uint32_t RX_TIMEOUT = 50;     // Systicks.
 
 
-    private:
-    #ifdef GTEST
-      FRIEND_TEST(Uart, TriageSof);
-      FRIEND_TEST(Uart, TriageEof);
-      FRIEND_TEST(Uart, TriageSofEof);
-      FRIEND_TEST(Uart, TriageElf);
-      FRIEND_TEST(Uart, TriageNone);
-    #endif
+  private:
+#ifdef GTEST
+    FRIEND_TEST(Uart, TriageSof);
+    FRIEND_TEST(Uart, TriageEof);
+    FRIEND_TEST(Uart, TriageSofEof);
+    FRIEND_TEST(Uart, TriageElf);
+    FRIEND_TEST(Uart, TriageNone);
+    FRIEND_TEST(Uart, Sequence);
+#endif
 };
 }    // namespace Nilai::Drivers::Uart
 

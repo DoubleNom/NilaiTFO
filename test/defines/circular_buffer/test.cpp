@@ -82,3 +82,26 @@ TEST(CircularBuffer, Pop_Multiple_Full) {
     cb.pop(6);
     EXPECT_EQ(0, cb.size());
 }
+
+TEST(CircularBuffer, Dma) {
+    int buff[5];
+    CircularBuffer<int> cb(buff, 5);
+
+    // 5 -> 5 = 0 diff
+    EXPECT_EQ(cb.dmaCounter(5), 0);
+
+    // 5 -> 0 = 5 diff
+    EXPECT_EQ(cb.dmaCounter(0), 5);
+
+    // 0 -> 0 = 0 diff
+    EXPECT_EQ(cb.dmaCounter(0), 0);
+
+    // 5 -> 3 = 2 diff
+    EXPECT_EQ(cb.dmaCounter(3), 2);
+
+    // 3 -> 4 <=> 3 + 5 -> 4 <=> 8 -> 4 = 4
+    EXPECT_EQ(cb.dmaCounter(4), 4);
+
+    // 4 -> 3 = 1
+    EXPECT_EQ(cb.dmaCounter(3), 1);
+}

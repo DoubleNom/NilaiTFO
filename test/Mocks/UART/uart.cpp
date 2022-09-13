@@ -34,7 +34,8 @@ HAL_StatusTypeDef HAL_UART_DMAStop(UART_HandleTypeDef*) {
 
 void Nilai_UART_Inject_DMA(UART_HandleTypeDef* handle, const uint8_t* buff, size_t len) {
     size_t pushed = s_uart_buffers[handle->id]->rx.push(buff, len);
-    __NILAI_DMA_DEC_COUNTER(handle->hdmarx, pushed);
+    s_uart_buffers[handle->id]->rx.pop(pushed);
+    __NILAI_DMA_DEC_COUNTER(handle->hdmarx, len);
 }
 
 void Nilai_UART_Inject_DMA(UART_HandleTypeDef* handle, const std::string& msg) {

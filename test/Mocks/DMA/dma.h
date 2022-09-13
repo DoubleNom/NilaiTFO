@@ -4,7 +4,7 @@
 
 struct DMA_HandleTypeDef {
     size_t id;
-    size_t counter;
+    int32_t counter;
     size_t capacity;
 };
 
