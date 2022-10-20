@@ -6,14 +6,10 @@
 #include "services/logger.hpp"
 
 
-static constexpr float ConvertToVolt(uint32_t val) {
-    return ((static_cast<float>(val) / 4095.0f) * 3.3f);
-}
+static constexpr float ConvertToVolt(uint32_t val) { return ((static_cast<float>(val) / 4095.0f) * 3.3f); }
 
 
-AdcModule::AdcModule(ADC_HandleTypeDef* adc, std::string label)
-: m_adc(adc)
-, m_label(std::move(label)) {
+AdcModule::AdcModule(ADC_HandleTypeDef* adc, std::string label) : m_adc(adc), m_label(std::move(label)) {
     CEP_ASSERT(adc != nullptr, "[%s]: ADC handle is null!", m_label.c_str());
     m_channelCount = adc->Init.NbrOfConversion;
     m_channelBuff  = new uint32_t[m_channelCount];
@@ -48,7 +44,8 @@ bool AdcModule::DoPost() {
             LOGTE(m_label.c_str(), "Error in POST: Channel %i reading 0!", i);
             isAllChannelsOk = false;
         } else {
-            LOGTI(m_label.c_str(), "Channel %i reading %0.3fV", i, ConvertToVolt(m_channelBuff[i]));
+            float volt = ConvertToVolt(m_channelBuff[i]);
+            LOGTI(m_label.c_str(), "Channel %i reading %0.3fV", i, volt);
         }
     }
     Stop();
@@ -65,12 +62,8 @@ float AdcModule::GetChannelReading(size_t channel) const {
     return ConvertToVolt(m_channelBuff[channel]);
 }
 
-void AdcModule::Start() {
-    HAL_ADC_Start_DMA(m_adc, &m_channelBuff[0], m_channelCount);
-}
+void AdcModule::Start() { HAL_ADC_Start_DMA(m_adc, &m_channelBuff[0], m_channelCount); }
 
-void AdcModule::Stop() {
-    HAL_ADC_Stop_DMA(m_adc);
-}
+void AdcModule::Stop() { HAL_ADC_Stop_DMA(m_adc); }
 
 #endif

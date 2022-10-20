@@ -49,29 +49,21 @@ struct Firmware {
         uint32_t    address;
         std::string path;
 
-        File(std::string name, uint32_t address)
-        : name(std::move(name))
-        , address(address) {
-        }
+        File(std::string name, uint32_t address) : name(std::move(name)), address(address) { }
     };
 
     std::string       folder;
     std::vector<File> files;
 
-
     Firmware() = default;
 
-    Firmware(std::string folder, std::vector<File> files)
-    : folder(std::move(folder))
-    , files(std::move(files)) {
+    Firmware(std::string folder, std::vector<File> files) : folder(std::move(folder)), files(std::move(files)) {
         for (auto& file : this->files) {
             file.path = this->folder + "/" + file.name;
         }
     }
 
-    std::string GetNoEraseFilePath() {
-        return folder + "/debug";
-    }
+    std::string GetNoEraseFilePath() { return folder + "/debug"; }
 };
 
 /**
@@ -89,7 +81,7 @@ struct Pins {
 
 class Module : public Nilai::Drivers::Uart::Module {
   public:
-    Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins);
+    Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins, const std::string& version);
 
     ~Module() override = default;
 
@@ -113,38 +105,25 @@ class Module : public Nilai::Drivers::Uart::Module {
      * Checks if the ESP32 is currently enabled.
      * @return True if the ESP32 is enabled, false otherwise.
      */
-    [[nodiscard]] bool IsEnabled() const {
-        return m_pins.enable.Get();
-    }
+    [[nodiscard]] bool IsEnabled() const { return m_pins.enable.Get(); }
 
     /**
      * Set Firmware used for flashing ESP on POST
      * Default firmware (empty) will disable flashing procedure.
      * @param firmware structure of the binary files
      */
-    void SetFirmware(Firmware& firmware) {
-        m_firmware = std::move(firmware);
-    }
+    void SetFirmware(Firmware& firmware) { m_firmware = std::move(firmware); }
 
     /**
      * Set the user data to send to the ESP if required
      * @param data byte array to send to the ESP
      * @param len length of the array
      */
-    void SetUserData(uint8_t* data, size_t len) {
-        m_userData = data;
-        m_dataLen  = len;
-    }
+    void SetUserData(uint8_t* data, size_t len) { m_userData.insert(m_userData.end(), data, data + len); }
+
+    void SetUserData(const std::vector<uint8_t>& data) { m_userData = std::move(data); }
 
   private:
-    Pins     m_pins = {};
-    Firmware m_firmware;
-    uint8_t* m_userData = nullptr;
-    size_t   m_dataLen  = 0;
-
-
-    static constexpr size_t TIMEOUT = 500;
-
     void SendUserData();
 
     bool Bootloader();
@@ -152,6 +131,15 @@ class Module : public Nilai::Drivers::Uart::Module {
     bool PrepareFlash();
 
     bool FlashBinary(size_t address, size_t file_size, size_t block_size, const std::function<size_t(uint8_t*)>& cb);
+
+  private:
+    Pins                 m_pins = {};
+    std::string          m_version;
+    Firmware             m_firmware;
+    std::vector<uint8_t> m_userData;
+
+  private:
+    static constexpr size_t TIMEOUT = 5 * 1000;
 };
 }    // namespace Nilai::Interfaces::Esp32
 /**

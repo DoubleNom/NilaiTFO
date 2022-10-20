@@ -1,28 +1,19 @@
 #ifndef CIRCULAR_BUFFER_HPP
 #define CIRCULAR_BUFFER_HPP
 
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 #include <vector>
 
 template<typename T>
 class CircularBuffer {
   public:
-    CircularBuffer(size_t size = 0)
-    : m_external(false)
-    , m_capacity(size) {
-        init(size);
-    }
+    CircularBuffer(size_t size = 0) : m_external(false), m_capacity(size) { init(size); }
 
-    CircularBuffer(T* c, size_t size)
-    : m_external(true)
-    , m_capacity(size) {
-        init(c, size);
-    }
+    CircularBuffer(T* c, size_t size) : m_external(true), m_capacity(size) { init(c, size); }
 
     ~CircularBuffer() {
-        if (!m_external)
-            delete[] m_c;
+        if (!m_external) delete[] m_c;
     }
 
     void init(size_t size) {
@@ -53,9 +44,7 @@ class CircularBuffer {
     /**
      * Return the first element of the buffer
      */
-    T& front() {
-        return m_c[m_read];
-    }
+    T& front() { return m_c[m_read]; }
 
     /**
      * Increment the read pointer by one, effectively removing the first element
@@ -73,11 +62,10 @@ class CircularBuffer {
      * effectively removing the n first elements of the buffer
      */
     void pop(size_t n) {
-        if(n >= m_capacity) n = m_capacity;
+        if (n >= m_capacity) n = m_capacity;
         m_read += n;
         m_size -= n;
-        while (m_read >= m_capacity)
-            m_read -= m_capacity;
+        while (m_read >= m_capacity) m_read -= m_capacity;
     }
 
     /**
@@ -97,7 +85,7 @@ class CircularBuffer {
 
     size_t push(const T* t, size_t len) {
         size_t pushed = 0;
-        for(size_t i = 0; i < len; ++i) {
+        for (size_t i = 0; i < len; ++i) {
             pushed += push(t[i]);
         }
         return pushed;
@@ -105,7 +93,7 @@ class CircularBuffer {
 
     size_t push(std::vector<T> buff) {
         size_t pushed = 0;
-        for(const auto& b: buff) {
+        for (const auto& b : buff) {
             pushed += push(b);
         }
         return pushed;
@@ -114,12 +102,12 @@ class CircularBuffer {
     T& read() {
         T& obj = m_c[m_read];
         m_read = next(m_read);
+        --m_size;
         return obj;
     }
 
     size_t read(T* buff, size_t len = 0) {
-        if (len <= 0 || m_size < len)
-            len = m_size;
+        if (len <= 0 || m_size < len) len = m_size;
         for (size_t i = 0; i < len; ++i) {
             buff[i] = (*this)[i];
         }
@@ -134,8 +122,7 @@ class CircularBuffer {
     }
 
     size_t peek(T* buff, size_t len = 0) {
-        if (len <= 0 || m_size < len)
-            len = m_size;
+        if (len <= 0 || m_size < len) len = m_size;
         for (size_t i = 0; i < len; ++i) {
             buff[i] = (*this)[i];
         }
@@ -147,8 +134,7 @@ class CircularBuffer {
         // We want the number of bytes written
         counter = m_capacity - counter;
 
-        if (counter < m_lastDmaCounter)
-            m_lastDmaCounter -= m_capacity;
+        if (counter < m_lastDmaCounter) m_lastDmaCounter -= m_capacity;
         size_t diff = counter - m_lastDmaCounter;
 
         m_write += diff;
@@ -169,21 +155,15 @@ class CircularBuffer {
         return diff;
     }
 
-    size_t getWritePos() const {
-        return m_write;
-    }
+    size_t getWritePos() const { return m_write; }
 
-    size_t getReadPos() const {
-        return m_read;
-    }
+    size_t getReadPos() const { return m_read; }
 
     void setReadPos(size_t readPos) {
-        while (readPos > m_capacity)
-            readPos -= m_capacity;
+        while (readPos > m_capacity) readPos -= m_capacity;
         m_read = readPos;
         m_size = m_write - m_read;
-        if (m_size < 0)
-            m_size += m_capacity;
+        if (m_size < 0) m_size += m_capacity;
     }
 
     /**
@@ -191,13 +171,9 @@ class CircularBuffer {
      * Does not return the max size of the buffer
      * Elements inserted using operator [] are ignored
      */
-    size_t size() const {
-        return m_size;
-    }
+    size_t size() const { return m_size; }
 
-    size_t capacity() const {
-        return m_capacity;
-    }
+    size_t capacity() const { return m_capacity; }
 
     /**
      * Reset the cursor and size of the buffer to 0
@@ -212,24 +188,18 @@ class CircularBuffer {
     /**
      * Access to the underlying array
      */
-    T* data() {
-        return m_c;
-    }
+    T* data() { return m_c; }
 
     /**
      * array access operator for writing
      * Note: does not update cursors position nor array size counter;
      */
-    T& operator[](int i) {
-        return m_c[idx(i)];
-    }
+    T& operator[](int i) { return m_c[idx(i)]; }
 
     /**
      * array access operation for reading
      */
-    T operator[](int i) const {
-        return m_c[idx(i)];
-    }
+    T operator[](int i) const { return m_c[idx(i)]; }
 
   private:
     T*     m_c        = nullptr;
@@ -238,21 +208,19 @@ class CircularBuffer {
     // This is used so we have different sized buffer
     int32_t m_read  = 0;
     int32_t m_write = 0;
-    size_t m_size  = 0;
+    size_t  m_size  = 0;
 
     int32_t m_lastDmaCounter = 0;
 
     size_t next(size_t origin) const {
         size_t r = origin + 1;
-        while (r >= m_capacity)
-            r -= m_capacity;
+        while (r >= m_capacity) r -= m_capacity;
         return r;
     }
 
     size_t idx(size_t idx) const {
         size_t r = m_read + idx;
-        while (r >= m_capacity)
-            r -= m_capacity;
+        while (r >= m_capacity) r -= m_capacity;
         return r;
     }
 };

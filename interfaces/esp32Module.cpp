@@ -20,8 +20,8 @@
 #include NILAI_HAL_HEADER
 #include "libs/esp-serial-flasher/include/esp_loader.h"
 #include "libs/esp-serial-flasher/port/nilai_port.h"
-#include "shared/services/file.h"
-#include "shared/services/filesystem.h"
+#include "services/file.h"
+#include "services/filesystem.h"
 
 #define ESP_DEBUG(msg, ...) LOGTD(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
 #define ESP_INFO(msg, ...)  LOGTI(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
@@ -30,11 +30,10 @@
 
 namespace Nilai::Interfaces::Esp32 {
 
-Module::Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins)
+Module::Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins, const std::string& version)
 : Nilai::Drivers::Uart::Module(label, uart, 4500, 256)
-, m_pins(pins) {
-    loader_port_nilai_init(this, m_pins.enable, m_pins.boot);
-
+, m_pins(pins)
+, m_version(version) {
     ESP_INFO("ESP Initialized");
 }
 
@@ -82,7 +81,6 @@ bool Module::Enable(BootMode mode) {
     m_pins.tpin.Set(false);
     HAL_Delay(1);
 
-
     if (mode == BootMode::Bootloader) {
         // io2 must be set to false when loading as bootloader
         // Otherwise, it will power-cycle
@@ -99,15 +97,23 @@ bool Module::Enable(BootMode mode) {
         SetStartOfFrameSequence("\x01\x02");
         SetEndOfFrameSequence("\x03\x04");
 
-        HAL_Delay(450);
+
+        // Wait for ESP to enable TPOUT
+        size_t deadline = HAL_GetTick() + Module::TIMEOUT;
+        while (!m_pins.tpout.Get()) {
+            if (HAL_GetTick() >= deadline) {
+                ESP_ERROR("TPOUT unchanged");
+                return false;
+            }
+        }
 
         SendUserData();
 
         // Wait for its response.
-        size_t start = HAL_GetTick();
+        deadline = HAL_GetTick() + Module::TIMEOUT;
         while (AvailableFrames() == 0) {
             Nilai::Drivers::Uart::Module::Run();
-            if (HAL_GetTick() >= start + Module::TIMEOUT) {
+            if (HAL_GetTick() >= deadline) {
                 // Timed out.
                 ESP_ERROR("No response from ESP!");
                 return false;
@@ -130,16 +136,12 @@ void Module::Disable() {
 }
 
 void Module::SendUserData() {
-    Transmit((const char*)&m_dataLen,
-             1);    // Report the data size 256 is max length for now
-    if (m_dataLen != 0)
-        Transmit((const char*)m_userData, m_dataLen);    // Send the user data
+    if (m_userData.size() != 0) Transmit((const char*)m_userData.data(), m_userData.size());    // Send the user data
 }
 
 bool Module::Bootloader() {
     // No firmware provided, skip procedure
-    if (m_firmware.files.empty())
-        return true;
+    if (m_firmware.files.empty()) return true;
 
     cep::Filesystem::fileInfo_t fileInfo;
     cep::Filesystem::Result     err;
@@ -163,6 +165,9 @@ bool Module::Bootloader() {
     if (!hasAllFiles) {
         return false;
     }
+
+    // Prepare esp_tool
+    loader_port_nilai_init(this, m_pins.enable, m_pins.boot);
 
     // Connect to ESP
     if (!PrepareFlash()) {

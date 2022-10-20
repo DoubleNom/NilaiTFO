@@ -14,8 +14,8 @@
 #if defined(NILAI_USE_LTC2498) && defined(NILAI_USE_SPI)
 #include "services/logger.hpp"
 
-#define LTC_INFO(msg, ...)  LOGTI(m_label.c_str(), msg __VA_OPT__(,) __VA_ARGS__)
-#define LTC_ERROR(msg, ...) LOGTE(m_label.c_str(), msg __VA_OPT__(,) __VA_ARGS__)
+#define LTC_INFO(msg, ...)  LOGTI(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
+#define LTC_ERROR(msg, ...) LOGTE(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
 
 namespace LTC2498 {
 std::array<uint8_t, 4> ConversionSettings::ToRegValues() const {
@@ -167,9 +167,7 @@ bool Ltc2498Module::QueueConversions(const std::vector<LTC2498::ConversionSettin
  * If MISO is 0: No conversion in progress.
  * @return
  */
-bool Ltc2498Module::IsConversionInProgress() const {
-    return m_misoPin.Get();
-}
+bool Ltc2498Module::IsConversionInProgress() const { return m_misoPin.Get(); }
 
 bool Ltc2498Module::StartConversion(const LTC2498::ConversionSettings& config) {
     return QueueConversions({config}, false);

@@ -57,7 +57,9 @@ public:
         return nullptr;
     }
 
-    void AddModule(Module* module) { m_modules.push_back(module); }
+    void AddModule(Module* module) {
+    	m_modules.push_back(module);
+    }
 
     std::vector<Module*>::iterator begin( ) { return m_modules.begin( ); }
     std::vector<Module*>::iterator end( ) { return m_modules.end( ); }

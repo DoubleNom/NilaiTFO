@@ -66,9 +66,7 @@ Module::Module(const std::string& label, UART_HandleTypeDef* uart, size_t txl, s
     LOGTI(label.c_str(), "Uart initialized");
 }
 
-Module::~Module() {
-    HAL_UART_DeInit(m_handle);
-}
+Module::~Module() { HAL_UART_DeInit(m_handle); }
 
 /**
  * If the initialization passed, the POST passes.
@@ -79,11 +77,9 @@ bool Module::DoPost() {
     return true;
 }
 
-void Module::Run() {
-    m_run();
-}
+void Module::Run() { m_run(); }
 
-void Module::Transmit(const char* msg, size_t len) {
+void Module::Transmit(const uint8_t* msg, size_t len) {
     CEP_ASSERT(msg != nullptr, "msg is NULL in UartModule::Transmit");
 
     if (!WaitUntilTransmissionComplete()) {
@@ -92,8 +88,17 @@ void Module::Transmit(const char* msg, size_t len) {
     }
 
     // Copy the message into the transmission buffer.
-    m_txBuff.resize(len);
-    memcpy((void*)m_txBuff.data(), (void*)msg, len);
+    m_txBuff.resize(len + m_sof.length() + m_eof.length());
+    uint8_t* ptr = m_txBuff.data();
+    if (!m_sof.empty()) {
+        memcpy(ptr, m_sof.data(), m_sof.length());
+        ptr += m_sof.length();
+    }
+    memcpy(ptr, msg, len);
+    ptr += len;
+    if (!m_eof.empty()) {
+        memcpy(ptr, m_eof.data(), m_eof.length());
+    }
 
     // Send the message.
     if (HAL_UART_Transmit_IT(m_handle, m_txBuff.data(), (uint16_t)m_txBuff.size()) != HAL_OK) {
@@ -101,43 +106,22 @@ void Module::Transmit(const char* msg, size_t len) {
         return;
     }
 }
+
+bool Module::Transmit(const uint8_t* msg, size_t len, uint32_t timeout) {
+    Transmit(msg, len);
+    return WaitUntilTransmissionComplete(timeout);
+}
+
+void Module::Transmit(const char* msg, size_t len) { Transmit((const uint8_t*)msg, len); }
 
 bool Module::Transmit(const char* msg, size_t len, uint32_t timeout) {
     Transmit(msg, len);
     return WaitUntilTransmissionComplete(timeout);
 }
 
-void Module::Transmit(const uint8_t* buff, size_t len) {
-    CEP_ASSERT(buff != nullptr, "msg is NULL in UartModule::Transmit");
+void Module::Transmit(const std::string& msg) { Transmit(msg.c_str(), msg.size()); }
 
-    if (!WaitUntilTransmissionComplete()) {
-        // Timed out.
-        return;
-    }
-
-    // Copy the message into the transmission buffer.
-    m_txBuff.resize(len);
-    memcpy(m_txBuff.data(), buff, len);
-
-    // Send the message.
-    if (HAL_UART_Transmit_IT(m_handle, m_txBuff.data(), (uint16_t)m_txBuff.size()) != HAL_OK) {
-        LOGTE(m_label.c_str(), "In Transmit: Unable to transmit message");
-        return;
-    }
-}
-
-bool Module::Transmit(const uint8_t* buff, size_t len, uint32_t timeout) {
-    Transmit(buff, len);
-    return WaitUntilTransmissionComplete(timeout);
-}
-
-void Module::Transmit(const std::string& msg) {
-    Transmit(msg.c_str(), msg.size());
-}
-
-void Module::Transmit(const std::vector<uint8_t>& msg) {
-    Transmit((const char*)msg.data(), msg.size());
-}
+void Module::Transmit(const std::vector<uint8_t>& msg) { Transmit((const char*)msg.data(), msg.size()); }
 
 [[maybe_unused]] void Module::VTransmit(const char* fmt, ...) {
     static char buff[256];
@@ -150,9 +134,7 @@ void Module::Transmit(const std::vector<uint8_t>& msg) {
     Transmit(buff, len);
 }
 
-size_t Module::Receive(uint8_t* buf, uint8_t len) {
-    return m_rxCirc.read(buf, len);
-}
+size_t Module::Receive(uint8_t* buf, uint8_t len) { return m_rxCirc.read(buf, len); }
 
 size_t Module::Receive(uint8_t* buf, uint8_t len, uint32_t timeout) {
     uint32_t deadline = HAL_GetTick() + timeout;
@@ -174,6 +156,14 @@ Frame Module::Receive() {
     return frame;
 }
 
+Frame Module::Peek() {
+    Frame frame;
+    if (m_rxFrames.size() != 0) frame = m_rxFrames.front();
+    return frame;
+}
+
+void Module::Pop() { m_rxFrames.pop(); }
+
 void Module::SetExpectedRxLen(size_t len) {
     m_efl = len;
     SetTriage();
@@ -191,9 +181,7 @@ void Module::SetFrameReceiveCpltCallback(const std::function<void()>& cb) {
     m_cb = cb;
 }
 
-void Module::ClearFrameReceiveCpltCallback() {
-    m_cb = std::function<void()>();
-}
+void Module::ClearFrameReceiveCpltCallback() { m_cb = std::function<void()>(); }
 
 void Module::SetStartOfFrameSequence(const std::string& sof) {
     m_sof = sof;
@@ -378,8 +366,8 @@ void Module::SetTriage() {
     else {
         LOGTW(m_label.c_str(), "Triage disabled");
         LOGTD(m_label.c_str(), "LEN: %d", m_efl);
-        LOGTD(m_label.c_str(), "SOF: %s", m_sof.empty() ? "[None]" : m_sof);
-        LOGTD(m_label.c_str(), "EOF: %s", m_eof.empty() ? "[None]" : m_eof);
+        LOGTD(m_label.c_str(), "SOF: %s", m_sof.empty() ? "[None]" : m_sof.c_str());
+        LOGTD(m_label.c_str(), "EOF: %s", m_eof.empty() ? "[None]" : m_eof.c_str());
         m_triage = [&]() {
         };
     }
@@ -392,15 +380,13 @@ void Module::SearchFrame(
   size_t               max_depth,
   size_t               offset) {
     auto found = std::ranges::search(std::ranges::subrange(data.begin() + offset, data.end()), pattern);
-    if (found.empty())
-        return;
+    if (found.empty()) return;
 
     auto start = std::distance(data.begin(), found.begin());
     auto end   = std::distance(data.begin(), found.end());
     result.push_back(start);
 
-    if ((max_depth == 0) || (result.size() < max_depth))
-        SearchFrame(data, pattern, result, max_depth, end);
+    if ((max_depth == 0) || (result.size() < max_depth)) SearchFrame(data, pattern, result, max_depth, end);
 }
 
 /*************************************************************************************************/

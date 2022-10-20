@@ -61,16 +61,14 @@ class Module : public cep::Module {
 
     void Run();
 
-    [[nodiscard]] const std::string& GetLabel() const override {
-        return m_label;
-    }
+    [[nodiscard]] const std::string& GetLabel() const override { return m_label; }
 
     /**
      * Non blocking send for bytes buffer
      * @param msg bytes to send
      * @param len number of bytes to send
      */
-    void Transmit(const char* msg, size_t len);
+    void Transmit(const uint8_t* msg, size_t len);
 
     /**
      * Blocking send
@@ -80,11 +78,11 @@ class Module : public cep::Module {
      * @param timeout waiting time for transmission
      * @return false on timeout
      */
+    bool Transmit(const uint8_t* msg, size_t len, uint32_t timeout);
+
+    void Transmit(const char* msg, size_t len);
+
     bool Transmit(const char* msg, size_t len, uint32_t timeout);
-
-    void Transmit(const uint8_t* buff, size_t len);
-
-    bool Transmit(const uint8_t* buff, size_t len, uint32_t timeout);
 
     void Transmit(const std::string& msg);
 
@@ -92,19 +90,19 @@ class Module : public cep::Module {
 
     [[maybe_unused]] void VTransmit(const char* fmt, ...);
 
-    size_t AvailableBytes() {
-        return m_rxCirc.size();
-    }
+    size_t AvailableBytes() { return m_rxCirc.size(); }
 
-    size_t AvailableFrames() {
-        return m_rxFrames.size();
-    }
+    size_t AvailableFrames() { return m_rxFrames.size(); }
 
     size_t Receive(uint8_t* buf, uint8_t len);
 
     size_t Receive(uint8_t* buf, uint8_t len, uint32_t timeout);
 
     Frame Receive();
+
+    Frame Peek();
+
+    void Pop();
 
     void SetExpectedRxLen(size_t len);
 
