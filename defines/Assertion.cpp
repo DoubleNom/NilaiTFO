@@ -11,25 +11,20 @@
 #include "Assertion.h"
 
 #if defined(NILAI_USE_LOGGER)
-#    include "services/logger.hpp"
+#include "services/logger.hpp"
 #endif
 
 // For our C friends:
 #if defined(__cplusplus)
-extern "C"
-{
+extern "C" {
 #endif
-    [[noreturn]] void AssertFailed(const uint8_t* file, uint32_t line, uint8_t shouldPrint)
-    {
+    [[noreturn]] void AssertFailed(const uint8_t* file, uint32_t line, uint8_t shouldPrint) {
 #if defined(NILAI_USE_LOGGER)
-        if (shouldPrint == 1)
-        {
+        if (shouldPrint == 1) {
             LOGF("An assertion failed: line %i, %s", line, file);
         }
 #endif
-        while (true)
-        {
-        }
+        while (true) { }
     }
 #if defined(__cplusplus)
 }

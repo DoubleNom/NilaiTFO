@@ -30,10 +30,8 @@
 /* Defines
  * -------------------------------------------------------------------------------------
  */
-namespace CEP_RTC
-{
-enum class DayLightSaving
-{
+namespace CEP_RTC {
+enum class DayLightSaving {
     None   = 0,
     AddOne = 1,
     SubOne = 2
@@ -47,8 +45,7 @@ enum class DayLightSaving
  *  - `%m`: Minutes
  *  - `%s`: Seconds
  */
-struct Time
-{
+struct Time {
     uint8_t hours   = 0;
     uint8_t minutes = 0;
     uint8_t seconds = 0;
@@ -62,15 +59,14 @@ struct Time
     std::string     ToStr() const;
 };
 
-struct Date
-{
+struct Date {
     uint16_t year  = 0;
     uint8_t  month = 0;    // Month is coded in BCD. 0x01 is January, 0x12 is December
     uint8_t  day   = 0;    // Day of the month, starts at 1.
     uint8_t  dotw  = 1;    // Day of the week, 1 is Monday, 7 is Sunday
 
     Date() = default;
-    Date(uint16_t y, uint8_t m, uint8_t d, uint8_t wd = 1) : year(y), month(m), day(d), dotw(wd) {}
+    Date(uint16_t y, uint8_t m, uint8_t d, uint8_t wd = 1) : year(y), month(m), day(d), dotw(wd) { }
     Date(const RTC_DateTypeDef& date);
 
     std::string DotWtoStr() const;
@@ -80,13 +76,12 @@ struct Date
     std::string     ToStr() const;
 };
 
-struct Timestamp
-{
+struct Timestamp {
     Date date;
     Time time;
 
     Timestamp() = default;
-    Timestamp(const Date& d, const Time& t) : date(d), time(t) {}
+    Timestamp(const Date& d, const Time& t) : date(d), time(t) { }
     Timestamp(size_t epoch);
 
     size_t ToEpoch() const;
@@ -98,9 +93,8 @@ struct Timestamp
 /* Classes
  * -------------------------------------------------------------------------------------
  */
-class RtcModule : public cep::Module
-{
-public:
+class RtcModule : public cep::Module {
+  public:
     RtcModule(RTC_HandleTypeDef* handle, const std::string& label);
 
     virtual ~RtcModule() override = default;
@@ -122,10 +116,10 @@ public:
 
     static RtcModule* Get() { return s_instance; }
 
-private:
+  private:
     static RtcModule* s_instance;
 
-private:
+  private:
     std::string        m_label;
     RTC_HandleTypeDef* m_handle;
 };

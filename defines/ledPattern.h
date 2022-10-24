@@ -11,14 +11,13 @@
  ******************************************************************************
  */
 #ifndef _ledPattern
-#    define _ledPattern
+#define _ledPattern
 
 /*****************************************************************************/
 /* Includes */
-#    include <vector>
+#include <vector>
 
-namespace cep
-{
+namespace cep {
 /*****************************************************************************/
 /* Exported defines */
 
@@ -27,8 +26,7 @@ namespace cep
 
 /*****************************************************************************/
 /* Exported types */
-struct LedPattern
-{
+struct LedPattern {
     size_t timeOn      = 0;
     size_t timeOff     = 0;
     int    repetitions = 0;
@@ -36,8 +34,7 @@ struct LedPattern
 
 using LedSequence = std::vector<LedPattern>;
 
-namespace StatusPatterns
-{
+namespace StatusPatterns {
 constexpr LedPattern NoErrors{500, 500, -1};
 constexpr LedPattern Error{100, 900, -1};
 }    // namespace StatusPatterns

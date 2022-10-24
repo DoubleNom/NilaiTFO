@@ -55,10 +55,8 @@ void Logger::Log(const char* fmt, ...) {
 }
 
 void Logger::VLog(const char* fmt, va_list args) {
-    if (s_instance == nullptr)
-        return;
-    if (s_instance->m_uart == nullptr)
-        return;
+    if (s_instance == nullptr) return;
+    if (s_instance->m_uart == nullptr) return;
 
     static char buff[1024] = {0};
 

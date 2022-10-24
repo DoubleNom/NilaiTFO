@@ -32,8 +32,7 @@ namespace ADS {
  ** @enum SampleRate
  ** @brief  fData rates at fMOD = 4.96MHz
  */
-enum class SampleRate
-{
+enum class SampleRate {
     Hz1000 = 0,
     Hz2000,
     Hz4000,
@@ -78,8 +77,7 @@ constexpr int SampleRateEnumToVal(SampleRate sr) {
  ** @enum   Hamming
  ** @brief  Select if hamming is on or off
  */
-enum class Hamming
-{
+enum class Hamming {
     On  = 0b01,
     Off = 0b00
 };
@@ -88,8 +86,7 @@ enum class Hamming
  ** @enum   WordSize
  ** @brief  SPI word size in bits
  ** */
-enum class WordSize
-{
+enum class WordSize {
     Size16 = 0b10,
     Size24 = 0b00,
     Size32 = 0b01
@@ -99,8 +96,7 @@ enum class WordSize
  ** @enum   SpiMode
  ** @brief  ADS SPI mode (synchronous/asynchronous slave/master)
  ** */
-enum class SpiMode
-{
+enum class SpiMode {
     SynchronousMaster = 0b00,
     SynchronousSlave  = 0b10,
     AsynchronousSlave = 0b01
@@ -109,8 +105,7 @@ enum class SpiMode
 /**
  ** @enum   Threshold
  ** @brief  Upper voltage threshold for fault detection */
-enum class Threshold
-{
+enum class Threshold {
     /*!< 000 : 95%      VDD     | 5%    VSS / -1.5V */
     P95 = 0b000,
     /*!< 001 : 92.5%    VDD     | 7.5%  VSS / -1.5V */
@@ -132,8 +127,7 @@ enum class Threshold
 /**
  ** @enum   Delay
  ** @brief  Delay values (for DONE pin & Hi-Z assertion on DOUT */
-enum class Delay
-{
+enum class Delay {
     /*!< 00 : >= 6ns delay */
     Ns6 = 0b00,
     /*!< 01 : >= 8ns delay */
@@ -148,8 +142,7 @@ enum class Delay
  ** @enum   ClockSource
  ** @brief  ADC clock source
  ** */
-enum class ClockSource
-{
+enum class ClockSource {
     CLKIN = 0b0,
     SCLK  = 0b1
 };
@@ -158,8 +151,7 @@ enum class ClockSource
  ** @enum   Resolution
  ** @brief  High/Low resolution mode
  ** */
-enum class Resolution
-{
+enum class Resolution {
     LowRes  = 0b0,
     HighRes = 0b1
 };
@@ -168,8 +160,7 @@ enum class Resolution
  ** @enum   ClockDivision
  ** @brief  Divider for FCLKIN to obtain FICLK
  ** */
-enum class ClockDivision
-{
+enum class ClockDivision {
     /*!< 001 : FICLK = FCLKIN / 2  */
     Div2 = 0b001,
     /*!< 010 : FICLK = FCLKIN / 4  */
@@ -190,8 +181,7 @@ enum class ClockDivision
  ** @enum   Oversampling
  ** @brief  Number of samples to take per data
  ** */
-enum class Oversampling
-{
+enum class Oversampling {
     /*!< 1111 : FDATA = FMOD / 32   */
     Ovr32 = 0b00001111,
     /*!< 1110 : FDATA = FMOD / 48   */
@@ -230,8 +220,7 @@ enum class Oversampling
  ** @enum   Enable
  ** @brief  Enable of disable a specific channel
  ** */
-enum class Enable
-{
+enum class Enable {
     Enable  = 0b1111,
     Disable = 0b0000,
 };
@@ -241,8 +230,7 @@ enum class Enable
  ** @brief  Digital gain of the ADC channel output.
  **         (can be specified for every channel)
  ** */
-enum class DigitalGain
-{
+enum class DigitalGain {
     Gain1  = 0b000,
     Gain2  = 0b001,
     Gain4  = 0b010,
@@ -254,8 +242,7 @@ enum class DigitalGain
  ** @enum   InternalReferenceEnable
  ** @brief  Enable/disable internal reference
  ** */
-enum class InternalReferenceEnable
-{
+enum class InternalReferenceEnable {
     Enable  = 0b1,
     Disable = 0b0
 };
@@ -264,8 +251,7 @@ enum class InternalReferenceEnable
  ** @enum   NegativeChargePumpEnable
  ** @brief  Enable/disable Negative charge pump
  ** */
-enum class NegativeChargePumpEnable
-{
+enum class NegativeChargePumpEnable {
     Enable  = 0b1,
     Disable = 0b0
 };
@@ -274,8 +260,7 @@ enum class NegativeChargePumpEnable
  ** @enum   ReferenceVoltage
  ** @brief  Set ADS reference voltage level (2.442V or 4.0V)
  ** */
-enum class ReferenceVoltage
-{
+enum class ReferenceVoltage {
     Ref2V442 = 0b0,
     Ref4V    = 0b1
 };
@@ -284,8 +269,7 @@ enum class ReferenceVoltage
  ** @enum   WatchdogEnable
  ** @brief  Enable/disable watchdog timer
  ** */
-enum class WatchdogEnable
-{
+enum class WatchdogEnable {
     Enable  = 0b1,
     Disable = 0b0
 };
@@ -294,8 +278,7 @@ enum class WatchdogEnable
  ** @enum   CrcMode
  ** @brief  Select if CRC is valid on device words only or on all bits
  ** */
-enum class CrcMode
-{
+enum class CrcMode {
     All        = 0b1,
     DeviceWord = 0b0
 };
@@ -304,8 +287,7 @@ enum class CrcMode
  ** @enum   FrameMode
  ** @brief  Enable/disable dynamic data frame size
  ** */
-enum class FrameMode
-{
+enum class FrameMode {
     Fixed   = 0b1,
     Dynamic = 0b0
 };
@@ -314,8 +296,7 @@ enum class FrameMode
  ** @enum   CrcEnable
  ** @brief  Enable/disable CRC
  ** */
-enum class CrcEnable
-{
+enum class CrcEnable {
     Enable  = 0b1,
     Disable = 0b0
 };
@@ -325,7 +306,7 @@ struct Pins {
     Nilai::Defines::Pin reset;
     Nilai::Defines::Pin dataReady;
     Nilai::Defines::Pin done;
-    bool     operator==(const Pins& other) const {
+    bool                operator==(const Pins& other) const {
         return (
           (chipSelect == other.chipSelect) && (this->reset == other.reset) && (this->dataReady == other.dataReady)
           && (this->done == other.done));
@@ -809,10 +790,10 @@ namespace Acknowledges {
 // Disable GCC's "unused variable" warning.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused"
-constexpr uint16_t Ready  = 0xFF04;
-constexpr uint16_t Lock   = 0x0555;
-constexpr uint16_t Unlock = 0x0655;
-constexpr uint16_t Wakeup = 0x0033;
+constexpr uint16_t     Ready  = 0xFF04;
+constexpr uint16_t     Lock   = 0x0555;
+constexpr uint16_t     Unlock = 0x0655;
+constexpr uint16_t     Wakeup = 0x0033;
 // Restore GCC's diagnostic options.
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic pop
@@ -826,7 +807,7 @@ namespace SysCommands {
 // Disable GCC's "unused variable" warning.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused"
-constexpr uint16_t Null = 0x0000;
+constexpr uint16_t     Null = 0x0000;
 /*!< Null command */
 constexpr uint16_t Reset = 0x0011;
 /*!< Software power-on reset */

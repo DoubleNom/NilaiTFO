@@ -23,30 +23,22 @@
 
 #include <cstdint>
 
-namespace Nilai::Defines
-{
+namespace Nilai::Defines {
 /*****************************************************************************/
 /* Exported types */
-struct Pin
-{
+struct Pin {
     GPIO_TypeDef* port = nullptr;
     uint16_t      pin  = 0;
 
-    void Set(bool state) const
-    {
-        HAL_GPIO_WritePin(port, pin, (state ? GPIO_PIN_SET : GPIO_PIN_RESET));
-    }
+    void Set(bool state) const { HAL_GPIO_WritePin(port, pin, (state ? GPIO_PIN_SET : GPIO_PIN_RESET)); }
 
     [[nodiscard]] bool Get() const { return (HAL_GPIO_ReadPin(port, pin) != 0u); }
 
 
-    bool operator==(const Pin& other) const
-    {
-        return ((this->port == other.port) && (this->pin == other.pin));
-    }
+    bool operator==(const Pin& other) const { return ((this->port == other.port) && (this->pin == other.pin)); }
 };
 
-}    // namespace cep
+}    // namespace Nilai::Defines
 /* Have a wonderful day :) */
 #endif /* GUARD_PIN_H */
 /**

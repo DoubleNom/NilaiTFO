@@ -15,35 +15,30 @@
 #if defined(NILAI_USE_TLP3545)
 /***********************************************/
 /* Includes */
-#    include <functional>
+#include <functional>
 
 /***********************************************/
 /* Defines */
-class TLP3545
-{
-public:
-    TLP3545( ) = default;
-    TLP3545(const std::function<void(bool)>& func) : m_ctrlFunc(func) {}
+class TLP3545 {
+  public:
+    TLP3545() = default;
+    TLP3545(const std::function<void(bool)>& func) : m_ctrlFunc(func) { }
 
     void SetCtrlFunc(const std::function<void(bool)>& func) { m_ctrlFunc = func; }
 
-    void Set( ) const
-    {
-        if (m_ctrlFunc)
-        {
+    void Set() const {
+        if (m_ctrlFunc) {
             m_ctrlFunc(true);
         }
     }
 
-    void Reset( ) const
-    {
-        if (m_ctrlFunc)
-        {
+    void Reset() const {
+        if (m_ctrlFunc) {
             m_ctrlFunc(false);
         }
     }
 
-private:
+  private:
     std::function<void(bool)> m_ctrlFunc = {};
 };
 

@@ -27,37 +27,28 @@
 
 /*****************************************************************************/
 /* Exported types */
-namespace cep
-{
-class Relay
-{
-public:
+namespace cep {
+class Relay {
+  public:
     Relay() = default;
-    Relay(const std::function<void(bool)>& set, const std::function<bool()>& get)
-    : m_set(set), m_get(get)
-    {
-    }
+    Relay(const std::function<void(bool)>& set, const std::function<bool()>& get) : m_set(set), m_get(get) { }
 
     void SetSetFunc(const std::function<void(bool)>& func) { m_set = func; }
     void SetGetFunc(const std::function<bool()>& func) { m_get = func; }
 
-    void Set(bool state)
-    {
-        if (m_set)
-        {
+    void Set(bool state) {
+        if (m_set) {
             m_set(state);
         }
     }
 
-    bool Get()
-    {
-        if (m_get)
-        {
+    bool Get() {
+        if (m_get) {
             return m_get();
         }
     }
 
-private:
+  private:
     std::function<void(bool)> m_set = {};
     std::function<bool()>     m_get = {};
 };

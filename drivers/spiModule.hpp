@@ -33,8 +33,7 @@
  * -------------------------------------------------------------------------------------
  */
 
-namespace CEP_SPI
-{
+namespace CEP_SPI {
 /*************************************************************************************************/
 /* Enumerated Types
  * ----------------------------------------------------------------------------
@@ -44,8 +43,7 @@ namespace CEP_SPI
  * @addtogroup  SPI_Status
  * @brief       SPI module status, mostly describing error states.
  */
-enum class Status
-{
+enum class Status {
     /*!< No error                         */
     NONE = 0x00000000U,
     /*!< MODF error                       */
@@ -74,8 +72,7 @@ enum class Status
     TIMEOUT = 0x00000400U,
 };
 
-enum class Polarity
-{
+enum class Polarity {
     /*!< Clock is low by default
      *   and active high >*/
     LOW = SPI_POLARITY_LOW,
@@ -84,8 +81,7 @@ enum class Polarity
     HIGH = SPI_POLARITY_HIGH
 };
 
-enum class Phase
-{
+enum class Phase {
     /*!< Sampling is done on clock
      *  rising edge */
     EDGE1 = SPI_PHASE_1EDGE,
@@ -95,26 +91,20 @@ enum class Phase
 };
 
 /** From: https://stackoverflow.com/a/15889501 */
-constexpr inline Status operator|(Status a, Status b) noexcept
-{
-    return static_cast<Status>(static_cast<std::underlying_type_t<Status>>(a) |
-                               static_cast<std::underlying_type_t<Status>>(b));
+constexpr inline Status operator|(Status a, Status b) noexcept {
+    return static_cast<Status>(
+      static_cast<std::underlying_type_t<Status>>(a) | static_cast<std::underlying_type_t<Status>>(b));
 }
-constexpr inline Status operator&(Status a, Status b) noexcept
-{
-    return static_cast<Status>(static_cast<std::underlying_type_t<Status>>(a) &
-                               static_cast<std::underlying_type_t<Status>>(b));
+constexpr inline Status operator&(Status a, Status b) noexcept {
+    return static_cast<Status>(
+      static_cast<std::underlying_type_t<Status>>(a) & static_cast<std::underlying_type_t<Status>>(b));
 }
-constexpr inline Status operator|=(Status& a, const Status& b) noexcept
-{
-    return a = a | b;
-}
+constexpr inline Status operator|=(Status& a, const Status& b) noexcept { return a = a | b; }
 /**
  * @}
  */
 
-enum class SectionState
-{
+enum class SectionState {
     NOT_COMPLETE,
     COMPLETE,
 };
@@ -125,9 +115,8 @@ enum class SectionState
 /* Classes
  * -------------------------------------------------------------------------------------
  */
-class SpiModule : public cep::Module
-{
-public:
+class SpiModule : public cep::Module {
+  public:
     SpiModule(SPI_HandleTypeDef* handle, const std::string& label);
     virtual ~SpiModule() override;
 
@@ -139,8 +128,7 @@ public:
     CEP_SPI::Status Transmit(const uint8_t* data, size_t len);
 
     inline CEP_SPI::Status TransmitByte(uint8_t data) { return Transmit(&data, 1); }
-    inline CEP_SPI::Status Transmit16(uint16_t data)
-    {
+    inline CEP_SPI::Status Transmit16(uint16_t data) {
         // Send the data in little-endian mode, for backward compatibility.
         // This method is slower than straight up reinterpret_cast, but it is
         // consistent across all implementation.
@@ -148,13 +136,9 @@ public:
     }
 
     CEP_SPI::Status Receive(uint8_t* ouptutData, size_t len);
-    CEP_SPI::Status Receive(std::vector<uint8_t>& outputData)
-    {
-        return Receive(outputData.data(), outputData.size());
-    }
+    CEP_SPI::Status Receive(std::vector<uint8_t>& outputData) { return Receive(outputData.data(), outputData.size()); }
     inline CEP_SPI::Status ReceiveByte(uint8_t* outputData) { return Receive(outputData, 1); }
-    inline CEP_SPI::Status Receive16(uint16_t* outputData)
-    {
+    inline CEP_SPI::Status Receive16(uint16_t* outputData) {
         return Receive(reinterpret_cast<uint8_t*>(outputData), 2);
     }
 
@@ -162,26 +146,21 @@ public:
     // #TODO Explain difference between const std::vector& and std::vector&
     CEP_SPI::Status Transaction(const std::vector<uint8_t>& txData, std::vector<uint8_t>& rxData);
 
-    inline CEP_SPI::Status TransactionByte(uint8_t txData, uint8_t* rxData)
-    {
+    inline CEP_SPI::Status TransactionByte(uint8_t txData, uint8_t* rxData) {
         return Transaction(&txData, 1, rxData, 1);
     }
-    inline CEP_SPI::Status Transaction16(uint16_t txData, uint16_t* rxData)
-    {
-        return Transaction(reinterpret_cast<uint8_t*>(&txData),
-                           2,
-                           reinterpret_cast<uint8_t*>(rxData),
-                           2);
+    inline CEP_SPI::Status Transaction16(uint16_t txData, uint16_t* rxData) {
+        return Transaction(reinterpret_cast<uint8_t*>(&txData), 2, reinterpret_cast<uint8_t*>(rxData), 2);
     }
 
-private:
+  private:
     std::string        m_label;
     SPI_HandleTypeDef* m_handle;
     CEP_SPI::Status    m_status = CEP_SPI::Status::NONE;
 
     constexpr static uint16_t TIMEOUT = 200;
 
-private:
+  private:
     void ErrorHandler();
     bool WaitUntilNotBusy();
 };

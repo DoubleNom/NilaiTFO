@@ -29,14 +29,12 @@
 #include <utility>
 #include <vector>
 
-namespace CEP_I2C
-{
+namespace CEP_I2C {
 /**
  ** @enum   Status
  ** @brief  I2C status enum, indicating mostly error states
  **/
-enum class Status
-{
+enum class Status {
     //!< No error.
     Ok = 0x00000000,
     /** Bus Error.
@@ -75,27 +73,24 @@ enum class Status
     BadInit          = 0x00000800,
 };
 
-struct Frame
-{
+struct Frame {
     uint8_t              deviceAddress   = 0;
     uint8_t              registerAddress = 0;
     std::vector<uint8_t> data            = {};
 
     Frame() = default;
     Frame(uint8_t devAddr, std::vector<uint8_t> pData = std::vector<uint8_t>())
-    : deviceAddress(devAddr), data(std::move(pData))
-    {
-    }
+    : deviceAddress(devAddr)
+    , data(std::move(pData)) { }
     Frame(uint8_t devAddr, uint8_t regAddr, std::vector<uint8_t> pData = std::vector<uint8_t>())
-    : deviceAddress(devAddr), registerAddress(regAddr), data(std::move(pData))
-    {
-    }
+    : deviceAddress(devAddr)
+    , registerAddress(regAddr)
+    , data(std::move(pData)) { }
 };
 }    // namespace CEP_I2C
 
-class I2cModule : public cep::Module
-{
-public:
+class I2cModule : public cep::Module {
+  public:
     I2cModule(I2C_HandleTypeDef* handle, std::string label);
     ~I2cModule() override = default;
 
@@ -104,30 +99,25 @@ public:
     [[nodiscard]] const std::string& GetLabel() const override { return m_label; }
 
     void TransmitFrame(uint8_t addr, const uint8_t* data, size_t len);
-    void TransmitFrame(uint8_t addr, const std::vector<uint8_t>& data)
-    {
+    void TransmitFrame(uint8_t addr, const std::vector<uint8_t>& data) {
         TransmitFrame(addr, data.data(), data.size());
     }
-    void TransmitFrame(const CEP_I2C::Frame& frame)
-    {
+    void TransmitFrame(const CEP_I2C::Frame& frame) {
         TransmitFrame(frame.deviceAddress, frame.data.data(), frame.data.size());
     }
 
     void TransmitFrameToRegister(uint8_t addr, uint8_t regAddr, const uint8_t* data, size_t len);
-    void TransmitFrameToRegister(uint8_t addr, uint8_t regAddr, const std::vector<uint8_t>& data)
-    {
+    void TransmitFrameToRegister(uint8_t addr, uint8_t regAddr, const std::vector<uint8_t>& data) {
         TransmitFrameToRegister(addr, regAddr, data.data(), data.size());
     }
-    void TransmitFrameToRegister(const CEP_I2C::Frame& frame)
-    {
-        TransmitFrameToRegister(
-          frame.deviceAddress, frame.registerAddress, frame.data.data(), frame.data.size());
+    void TransmitFrameToRegister(const CEP_I2C::Frame& frame) {
+        TransmitFrameToRegister(frame.deviceAddress, frame.registerAddress, frame.data.data(), frame.data.size());
     }
 
     CEP_I2C::Frame ReceiveFrame(uint8_t addr, size_t len);
     CEP_I2C::Frame ReceiveFrameFromRegister(uint8_t addr, uint8_t regAddr, size_t len);
 
-protected:
+  protected:
     I2C_HandleTypeDef* m_handle = nullptr;
     std::string        m_label;
 

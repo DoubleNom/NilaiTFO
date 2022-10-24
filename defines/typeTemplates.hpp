@@ -20,8 +20,7 @@
 #include <vector>
 
 
-namespace cep
-{
+namespace cep {
 
 
 /*************************************************************************************************/
@@ -39,38 +38,32 @@ template<typename>
 struct width2;
 
 template<>
-struct width2<std::uint8_t>
-{
+struct width2<std::uint8_t> {
     using type = std::uint16_t;
 };
 
 template<>
-struct width2<std::uint16_t>
-{
+struct width2<std::uint16_t> {
     using type = std::uint32_t;
 };
 
 template<>
-struct width2<std::uint32_t>
-{
+struct width2<std::uint32_t> {
     using type = std::uint64_t;
 };
 
 template<>
-struct width2<std::int8_t>
-{
+struct width2<std::int8_t> {
     using type = std::int16_t;
 };
 
 template<>
-struct width2<std::int16_t>
-{
+struct width2<std::int16_t> {
     using type = std::int32_t;
 };
 
 template<>
-struct width2<std::int32_t>
-{
+struct width2<std::int32_t> {
     using type = std::int64_t;
 };
 
@@ -87,14 +80,10 @@ struct width2<std::int32_t>
  */
 #pragma region is_std_vector
 template<typename>
-struct is_std_vector : std::false_type
-{
-};
+struct is_std_vector : std::false_type { };
 
 template<typename T, typename A>
-struct is_std_vector<std::vector<T, A>> : std::true_type
-{
-};
+struct is_std_vector<std::vector<T, A>> : std::true_type { };
 /**
  * @}
  */
@@ -108,39 +97,25 @@ struct is_std_vector<std::vector<T, A>> : std::true_type
  */
 #pragma region is_std_array
 template<typename T>
-struct is_std_array : std::false_type
-{
-};
+struct is_std_array : std::false_type { };
 
 template<std::size_t size>
-struct is_std_array<std::array<char, size>> : std::true_type
-{
-};
+struct is_std_array<std::array<char, size>> : std::true_type { };
 
 template<std::size_t size>
-struct is_std_array<std::array<uint8_t, size>> : std::true_type
-{
-};
+struct is_std_array<std::array<uint8_t, size>> : std::true_type { };
 
 template<std::size_t size>
-struct is_std_array<std::array<uint16_t, size>> : std::true_type
-{
-};
+struct is_std_array<std::array<uint16_t, size>> : std::true_type { };
 
 template<std::size_t size>
-struct is_std_array<std::array<uint32_t, size>> : std::true_type
-{
-};
+struct is_std_array<std::array<uint32_t, size>> : std::true_type { };
 
 template<std::size_t size>
-struct is_std_array<std::array<uint64_t, size>> : std::true_type
-{
-};
+struct is_std_array<std::array<uint64_t, size>> : std::true_type { };
 
 template<std::size_t size>
-struct is_std_array<std::array<std::string, size>> : std::true_type
-{
-};
+struct is_std_array<std::array<std::string, size>> : std::true_type { };
 /**
  * @}
  */
@@ -154,19 +129,13 @@ struct is_std_array<std::array<std::string, size>> : std::true_type
  */
 #pragma region is_bool
 template<typename T>
-struct is_bool_helper : std::false_type
-{
-};
+struct is_bool_helper : std::false_type { };
 
 template<>
-struct is_bool_helper<bool> : std::true_type
-{
-};
+struct is_bool_helper<bool> : std::true_type { };
 
 template<typename T>
-struct is_bool : is_bool_helper<std::remove_cv_t<T>>
-{
-};
+struct is_bool : is_bool_helper<std::remove_cv_t<T>> { };
 /**
  * @}
  */
@@ -180,19 +149,13 @@ struct is_bool : is_bool_helper<std::remove_cv_t<T>>
  */
 #pragma region is_string
 template<typename T>
-struct is_string_helper : std::false_type
-{
-};
+struct is_string_helper : std::false_type { };
 
 template<>
-struct is_string_helper<std::string> : std::true_type
-{
-};
+struct is_string_helper<std::string> : std::true_type { };
 
 template<typename T>
-struct is_string : is_string_helper<std::remove_cv_t<T>>
-{
-};
+struct is_string : is_string_helper<std::remove_cv_t<T>> { };
 /**
  * @}
  */
@@ -204,12 +167,11 @@ struct is_string : is_string_helper<std::remove_cv_t<T>>
 
 /**
  * @brief   Converts a strongly-typed enum class into an int (or specified underlying type).
- * 
+ *
  * From:    https://stackoverflow.com/a/33083231
  */
 template<typename Enum>
-constexpr std::underlying_type_t<Enum> Underlying(Enum e) noexcept
-{
+constexpr std::underlying_type_t<Enum> Underlying(Enum e) noexcept {
     return static_cast<std::underlying_type_t<Enum>>(e);
 }
 

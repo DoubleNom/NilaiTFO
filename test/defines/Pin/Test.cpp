@@ -9,12 +9,12 @@
  ******************************************************************************
  */
 #include "defines/pin.h"
+
 #include <gtest/gtest.h>
 
 using namespace cep;
 
-TEST(Pin, Set_Single)
-{
+TEST(Pin, Set_Single) {
     Pin p = {&GPIOA, 1};
     p.Set(true);
     EXPECT_EQ(0x0001, GPIOA);
@@ -22,8 +22,7 @@ TEST(Pin, Set_Single)
     EXPECT_EQ(0x0000, GPIOA);
 }
 
-TEST(Pin, Set_Multiple)
-{
+TEST(Pin, Set_Multiple) {
     Pin p = {&GPIOA, 0xAAAA};
     p.Set(true);
     EXPECT_EQ(0xAAAA, GPIOA);
@@ -31,8 +30,7 @@ TEST(Pin, Set_Multiple)
     EXPECT_EQ(0x0000, GPIOA);
 }
 
-TEST(Pin, Set_DontAffectOthers)
-{
+TEST(Pin, Set_DontAffectOthers) {
     Pin p1 = {&GPIOA, 1};
     Pin p2 = {&GPIOA, 0x8000};
     p1.Set(true);
@@ -45,24 +43,21 @@ TEST(Pin, Set_DontAffectOthers)
     EXPECT_EQ(true, p2.Get());
 }
 
-TEST(Pin, Get_Single)
-{
+TEST(Pin, Get_Single) {
     Pin p = {&GPIOA, 1};
     EXPECT_EQ(false, p.Get());
     p.Set(true);
     EXPECT_EQ(true, p.Get());
 }
 
-TEST(Pin, Compare_eq)
-{
-    Pin a = {&GPIOA, 1};
+TEST(Pin, Compare_eq) {
+    Pin a  = {&GPIOA, 1};
     Pin a2 = {&GPIOA, 1};
 
     EXPECT_TRUE(a == a2) << "Expected pin a to be identical to pin a2";
 }
 
-TEST(Pin, Compare_neq)
-{
+TEST(Pin, Compare_neq) {
     // Different port, same pin.
     Pin a = {&GPIOA, 1};
     Pin b = {&GPIOB, 1};

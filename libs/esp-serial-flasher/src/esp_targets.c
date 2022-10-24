@@ -14,18 +14,19 @@
  */
 
 #include "../private_include/esp_targets.h"
+
 #include <stddef.h>
 
 #define MAX_MAGIC_VALUES 2
 
-typedef esp_loader_error_t (*read_spi_config_t)(uint32_t efuse_base, uint32_t *spi_config);
+typedef esp_loader_error_t (*read_spi_config_t)(uint32_t efuse_base, uint32_t* spi_config);
 
 typedef struct {
     target_registers_t regs;
-    uint32_t efuse_base;
-    uint32_t chip_magic_value[MAX_MAGIC_VALUES];
-    read_spi_config_t read_spi_config;
-    bool encryption_in_begin_flash_cmd;
+    uint32_t           efuse_base;
+    uint32_t           chip_magic_value[MAX_MAGIC_VALUES];
+    read_spi_config_t  read_spi_config;
+    bool               encryption_in_begin_flash_cmd;
 } esp_target_t;
 
 // This ROM address has a different value on each chip model
@@ -36,8 +37,8 @@ typedef struct {
 #define ESP32xx_SPI_REG_BASE 0x60002000
 #define ESP32_SPI_REG_BASE   0x3ff42000
 
-static esp_loader_error_t spi_config_esp32(uint32_t efuse_base, uint32_t *spi_config);
-static esp_loader_error_t spi_config_esp32xx(uint32_t efuse_base, uint32_t *spi_config);
+static esp_loader_error_t spi_config_esp32(uint32_t efuse_base, uint32_t* spi_config);
+static esp_loader_error_t spi_config_esp32xx(uint32_t efuse_base, uint32_t* spi_config);
 
 static const esp_target_t esp_target[ESP_MAX_CHIP] = {
 
@@ -153,21 +154,17 @@ static const esp_target_t esp_target[ESP_MAX_CHIP] = {
     },
 };
 
-const target_registers_t *get_esp_target_data(target_chip_t chip)
-{
-    return (target_registers_t *)&esp_target[chip];
-}
+const target_registers_t* get_esp_target_data(target_chip_t chip) { return (target_registers_t*)&esp_target[chip]; }
 
-esp_loader_error_t loader_detect_chip(target_chip_t *target_chip, const target_registers_t **target_data)
-{
+esp_loader_error_t loader_detect_chip(target_chip_t* target_chip, const target_registers_t** target_data) {
     uint32_t magic_value;
-    RETURN_ON_ERROR( esp_loader_read_register(CHIP_DETECT_MAGIC_REG_ADDR,  &magic_value) );
+    RETURN_ON_ERROR(esp_loader_read_register(CHIP_DETECT_MAGIC_REG_ADDR, &magic_value));
 
     for (int chip = 0; chip < ESP_MAX_CHIP; chip++) {
-        for(int index = 0; index < MAX_MAGIC_VALUES; index++) {
+        for (int index = 0; index < MAX_MAGIC_VALUES; index++) {
             if (magic_value == esp_target[chip].chip_magic_value[index]) {
                 *target_chip = (target_chip_t)chip;
-                *target_data = (target_registers_t *)&esp_target[chip];
+                *target_data = (target_registers_t*)&esp_target[chip];
                 return ESP_LOADER_SUCCESS;
             }
         }
@@ -176,31 +173,23 @@ esp_loader_error_t loader_detect_chip(target_chip_t *target_chip, const target_r
     return ESP_LOADER_ERROR_INVALID_TARGET;
 }
 
-esp_loader_error_t loader_read_spi_config(target_chip_t target_chip, uint32_t *spi_config)
-{
-    const esp_target_t *target = &esp_target[target_chip];
+esp_loader_error_t loader_read_spi_config(target_chip_t target_chip, uint32_t* spi_config) {
+    const esp_target_t* target = &esp_target[target_chip];
     return target->read_spi_config(target->efuse_base, spi_config);
 }
 
-static inline uint32_t efuse_word_addr(uint32_t efuse_base, uint32_t n)
-{
-    return efuse_base + (n * 4);
-}
+static inline uint32_t efuse_word_addr(uint32_t efuse_base, uint32_t n) { return efuse_base + (n * 4); }
 
 // 30->GPIO32 | 31->GPIO33
-static inline uint8_t adjust_pin_number(uint8_t num)
-{
-    return (num >= 30) ? num + 2 : num;
-}
+static inline uint8_t adjust_pin_number(uint8_t num) { return (num >= 30) ? num + 2 : num; }
 
 
-static esp_loader_error_t spi_config_esp32(uint32_t efuse_base, uint32_t *spi_config)
-{
+static esp_loader_error_t spi_config_esp32(uint32_t efuse_base, uint32_t* spi_config) {
     *spi_config = 0;
 
     uint32_t reg5, reg3;
-    RETURN_ON_ERROR( esp_loader_read_register(efuse_word_addr(efuse_base, 5), &reg5) );
-    RETURN_ON_ERROR( esp_loader_read_register(efuse_word_addr(efuse_base, 3), &reg3) );
+    RETURN_ON_ERROR(esp_loader_read_register(efuse_word_addr(efuse_base, 5), &reg5));
+    RETURN_ON_ERROR(esp_loader_read_register(efuse_word_addr(efuse_base, 3), &reg3));
 
     uint32_t pins = reg5 & 0xfffff;
 
@@ -208,11 +197,11 @@ static esp_loader_error_t spi_config_esp32(uint32_t efuse_base, uint32_t *spi_co
         return ESP_LOADER_SUCCESS;
     }
 
-    uint8_t clk = adjust_pin_number( (pins >> 0)  & 0x1f );
-    uint8_t q   = adjust_pin_number( (pins >> 5)  & 0x1f );
-    uint8_t d   = adjust_pin_number( (pins >> 10) & 0x1f );
-    uint8_t cs  = adjust_pin_number( (pins >> 15) & 0x1f );
-    uint8_t hd  = adjust_pin_number( (reg3 >> 4)  & 0x1f );
+    uint8_t clk = adjust_pin_number((pins >> 0) & 0x1f);
+    uint8_t q   = adjust_pin_number((pins >> 5) & 0x1f);
+    uint8_t d   = adjust_pin_number((pins >> 10) & 0x1f);
+    uint8_t cs  = adjust_pin_number((pins >> 15) & 0x1f);
+    uint8_t hd  = adjust_pin_number((reg3 >> 4) & 0x1f);
 
     if (clk == cs || clk == d || clk == q || q == cs || q == d || q == d) {
         return ESP_LOADER_SUCCESS;
@@ -224,13 +213,12 @@ static esp_loader_error_t spi_config_esp32(uint32_t efuse_base, uint32_t *spi_co
 }
 
 // Applies for esp32s2, esp32c3 and esp32c3
-static esp_loader_error_t spi_config_esp32xx(uint32_t efuse_base, uint32_t *spi_config)
-{
+static esp_loader_error_t spi_config_esp32xx(uint32_t efuse_base, uint32_t* spi_config) {
     *spi_config = 0;
 
     uint32_t reg1, reg2;
-    RETURN_ON_ERROR( esp_loader_read_register(efuse_word_addr(efuse_base, 18), &reg1) );
-    RETURN_ON_ERROR( esp_loader_read_register(efuse_word_addr(efuse_base, 19), &reg2) );
+    RETURN_ON_ERROR(esp_loader_read_register(efuse_word_addr(efuse_base, 18), &reg1));
+    RETURN_ON_ERROR(esp_loader_read_register(efuse_word_addr(efuse_base, 19), &reg2));
 
     uint32_t pins = ((reg1 >> 16) | ((reg2 & 0xfffff) << 16)) & 0x3fffffff;
 
@@ -242,7 +230,4 @@ static esp_loader_error_t spi_config_esp32xx(uint32_t efuse_base, uint32_t *spi_
     return ESP_LOADER_SUCCESS;
 }
 
-bool encryption_in_begin_flash_cmd(target_chip_t target)
-{
-    return target == ESP32_CHIP || target == ESP8266_CHIP;
-}
+bool encryption_in_begin_flash_cmd(target_chip_t target) { return target == ESP32_CHIP || target == ESP8266_CHIP; }

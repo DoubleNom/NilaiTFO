@@ -1,13 +1,14 @@
 #include "uart.h"
+
 #include <algorithm>
 
-size_t s_uart_buffers_id_count;
+size_t                      s_uart_buffers_id_count;
 std::map<size_t, IoBuffer*> s_uart_buffers;
 
 void Nilai_UART_Init(UART_HandleTypeDef* handle, size_t txl, size_t rxl) {
     s_uart_buffers[s_uart_buffers_id_count] = new IoBuffer{{txl}, {rxl}};
-    handle->id = s_uart_buffers_id_count++;
-    handle->hdmarx = new DMA_HandleTypeDef;
+    handle->id                              = s_uart_buffers_id_count++;
+    handle->hdmarx                          = new DMA_HandleTypeDef;
     __NILAI_DMA_SET_CAPACITY(handle->hdmarx, rxl);
 }
 
@@ -28,9 +29,7 @@ HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef* handle, uint8_t* buff
     return HAL_OK;
 }
 
-HAL_StatusTypeDef HAL_UART_DMAStop(UART_HandleTypeDef*) {
-    return HAL_OK;
-}
+HAL_StatusTypeDef HAL_UART_DMAStop(UART_HandleTypeDef*) { return HAL_OK; }
 
 void Nilai_UART_Inject_DMA(UART_HandleTypeDef* handle, const uint8_t* buff, size_t len) {
     size_t pushed = s_uart_buffers[handle->id]->rx.push(buff, len);
@@ -46,6 +45,4 @@ void Nilai_UART_Inject_DMA(UART_HandleTypeDef* handle, const std::vector<uint8_t
     Nilai_UART_Inject_DMA(handle, buff.data(), buff.size());
 }
 
-IoBuffer* Nilai_UART_Get_Buffer(UART_HandleTypeDef* handle) {
-    return s_uart_buffers[handle->id];
-}
+IoBuffer* Nilai_UART_Get_Buffer(UART_HandleTypeDef* handle) { return s_uart_buffers[handle->id]; }

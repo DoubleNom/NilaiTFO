@@ -20,11 +20,9 @@
 
 #include <algorithm>
 
-#define CAN_ERROR(msg, ...) LOGTE(m_label.c_str(), msg __VA_OPT__(,) __VA_ARGS__)
+#define CAN_ERROR(msg, ...) LOGTE(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
 
-CanModule::CanModule(CAN_HandleTypeDef* handle, const std::string& label)
-: m_handle(handle)
-, m_label(label) {
+CanModule::CanModule(CAN_HandleTypeDef* handle, const std::string& label) : m_handle(handle), m_label(label) {
     CEP_ASSERT(handle != nullptr, "CAN Handle is NULL!");
     m_framesReceived.reserve(5);
     m_callbacks = std::map<CEP_CAN::Irq, std::function<void()>>(
@@ -48,9 +46,7 @@ CanModule::CanModule(CAN_HandleTypeDef* handle, const std::string& label)
     LOGTI(m_label.c_str(), "Initialized");
 }
 
-CanModule::~CanModule() {
-    HAL_CAN_Stop(m_handle);
-}
+CanModule::~CanModule() { HAL_CAN_Stop(m_handle); }
 
 /**
  * If it passes initialization, it passes the POST.
@@ -61,8 +57,7 @@ bool CanModule::DoPost() {
     return true;
 }
 
-void CanModule::Run() {
-}
+void CanModule::Run() { }
 
 void CanModule::ConfigureFilter(const CEP_CAN::FilterConfiguration& config) {
     uint64_t hash = ((uint64_t)config.filterId.fullId << 32) | config.maskId.fullId;
@@ -127,19 +122,11 @@ CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const uint8_t* data, siz
     return TransmitFrame(addr, dataV, forceExtended);
 }
 
-void CanModule::SetCallback(CEP_CAN::Irq irq, const std::function<void()>& callback) {
-    m_callbacks[irq] = callback;
-}
-void CanModule::ClearCallback(CEP_CAN::Irq irq) {
-    m_callbacks[irq] = std::function<void()>();
-}
+void CanModule::SetCallback(CEP_CAN::Irq irq, const std::function<void()>& callback) { m_callbacks[irq] = callback; }
+void CanModule::ClearCallback(CEP_CAN::Irq irq) { m_callbacks[irq] = std::function<void()>(); }
 
-void CanModule::EnableInterrupt(CEP_CAN::Irq irq) {
-    __HAL_CAN_ENABLE_IT(m_handle, (uint32_t)irq);
-}
-void CanModule::DisableInterrupt(CEP_CAN::Irq irq) {
-    __HAL_CAN_DISABLE_IT(m_handle, (uint32_t)irq);
-}
+void CanModule::EnableInterrupt(CEP_CAN::Irq irq) { __HAL_CAN_ENABLE_IT(m_handle, (uint32_t)irq); }
+void CanModule::DisableInterrupt(CEP_CAN::Irq irq) { __HAL_CAN_DISABLE_IT(m_handle, (uint32_t)irq); }
 
 void CanModule::HandleIrq() {
     // CAN Interrupt Register.
@@ -173,8 +160,7 @@ void CanModule::HandleFrameReception(CEP_CAN::RxFifo fifo) {
                 m_callbacks[CEP_CAN::Irq::Fifo1MessagePending]();
             }
             break;
-        default:
-            CEP_ASSERT(false, "In %s::HandleFrameReception, invalid FIFO!", m_label.c_str());
+        default: CEP_ASSERT(false, "In %s::HandleFrameReception, invalid FIFO!", m_label.c_str());
     }
 }
 
@@ -474,8 +460,7 @@ void CanModule::HandleErrorIrq(uint32_t ier) {
                         // CRC Error:
                         m_status |= CEP_CAN::Status::ERROR_CRC;
                         break;
-                    default:
-                        break;
+                    default: break;
                 }
 
                 // Clear Last Error code Flag.

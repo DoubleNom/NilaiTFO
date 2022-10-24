@@ -43,7 +43,7 @@
 #define CEP_ASSERT(x, msg, ...)                                                                                        \
     do {                                                                                                               \
         if (!(x)) {                                                                                                    \
-            LOGD("Assert Failed at line %i %s: " msg, __LINE__, __FILE__ __VA_OPT__(,) __VA_ARGS__);                              \
+            LOGD("Assert Failed at line %i %s: " msg, __LINE__, __FILE__ __VA_OPT__(, ) __VA_ARGS__);                  \
             AssertFailed((uint8_t*)__FILE__, __LINE__, 0);                                                             \
         }                                                                                                              \
     } while (false)

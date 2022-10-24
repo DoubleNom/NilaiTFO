@@ -27,8 +27,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace cep
-{
+namespace cep {
 
 /*************************************************************************************************/
 /* Function declarations ----------------------------------------------------------------------- */
@@ -85,10 +84,8 @@ static constexpr void arraynificator(void* src, size_t len, void* dest);
  * @retval  value swapped
  */
 template<typename T>
-constexpr T swap(T input)
-{
-    static_assert(std::is_integral<T>::value,
-                  "value to swap must be an integral type (uint8_t, int, size_t, ect...)");
+constexpr T swap(T input) {
+    static_assert(std::is_integral<T>::value, "value to swap must be an integral type (uint8_t, int, size_t, ect...)");
     static_assert(std::is_unsigned<T>::value, "value to swap must be an unsigned integer.");
 
     constexpr size_t size = 8 * sizeof(T);
@@ -108,18 +105,15 @@ constexpr T swap(T input)
  *
  * @retval  uint64_t: combined value
  */
-uint64_t combine(const uint8_t* array, uint8_t length)
-{
-    if (array == nullptr)
-    {
+uint64_t combine(const uint8_t* array, uint8_t length) {
+    if (array == nullptr) {
         return 0;
     }
     CEP_ASSERT(length <= sizeof(uint64_t), "Invalid array length");
 
     uint64_t output    = 0;
     uint8_t* outputPtr = reinterpret_cast<uint8_t*>(&output);
-    for (uint8_t i = 0; i < length; i++)
-    {
+    for (uint8_t i = 0; i < length; i++) {
         outputPtr[length - (i + 1)] = array[i];
     }
 
@@ -135,15 +129,12 @@ uint64_t combine(const uint8_t* array, uint8_t length)
  * @param   dest: Destination array to copy the values into
  * @retval  None
  */
-constexpr void arraynificator(void* src, size_t len, void* dest)
-{
-    if (src == nullptr || dest == nullptr)
-    {
+constexpr void arraynificator(void* src, size_t len, void* dest) {
+    if (src == nullptr || dest == nullptr) {
         return;
     }
 
-    for (size_t i = 0; i < len; i++)
-    {
+    for (size_t i = 0; i < len; i++) {
         (static_cast<uint8_t*>(dest))[i] = (static_cast<uint8_t*>(src))[i];
     }
 }

@@ -11,7 +11,7 @@
  * @brief       CAN communication module
  */
 #ifndef CAN_MODULE_HPP_
-#    define CAN_MODULE_HPP_
+#define CAN_MODULE_HPP_
 /*************************************************************************************************/
 /* Includes
  * ------------------------------------------------------------------------------------
@@ -20,19 +20,19 @@
 #include "test/Mocks/CAN/can.h"
 #endif
 
-#    if defined(NILAI_USE_CAN)
-#        include "defines/internalConfig.h"
-#        include NILAI_HAL_HEADER
-#        if defined(HAL_CAN_MODULE_ENABLED)
-#            include "defines/macros.hpp"
-#            include "defines/misc.hpp"
-#            include "defines/module.hpp"
+#if defined(NILAI_USE_CAN)
+#include "defines/internalConfig.h"
+#include NILAI_HAL_HEADER
+#if defined(HAL_CAN_MODULE_ENABLED)
+#include "defines/macros.hpp"
+#include "defines/misc.hpp"
+#include "defines/module.hpp"
 
-#            include <array>
-#            include <cstdint>
-#            include <functional>
-#            include <map>
-#            include <vector>
+#include <array>
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <vector>
 
 /*************************************************************************************************/
 /* Defines
@@ -44,15 +44,13 @@
  * ----------------------------------------------------------------------------
  */
 
-namespace CEP_CAN
-{
+namespace CEP_CAN {
 /**
  * @addtogroup  CAN_Status
  * @brief       Enum listing all the possible CAN status
  * @{
  */
-enum class Status
-{
+enum class Status {
     //!< No error.
     ERROR_NONE = 0x00000000U,
     //!< Protocol Error Warning.
@@ -103,10 +101,10 @@ enum class Status
     //!< Parameter error.
     ERROR_PARAM = 0x00200000U,
 
-#            if USE_HAL_CAN_REGISTER_CALLBACKS == 1
+#if USE_HAL_CAN_REGISTER_CALLBACKS == 1
     //!< Invalid Callback error */
     ERROR_INVALID_CALLBACK = 0x00400000U,
-#            endif
+#endif
 
     //!< Internal error.
     ERROR_INTERNAL = 0x00800000U,
@@ -125,65 +123,56 @@ enum class Status
 };
 
 /** From: https://stackoverflow.com/a/15889501 */
-constexpr inline Status operator|(Status a, Status b)
-{
-    return static_cast<Status>(static_cast<std::underlying_type_t<Status>>(a) |
-                               static_cast<std::underlying_type_t<Status>>(b));
+constexpr inline Status operator|(Status a, Status b) {
+    return static_cast<Status>(
+      static_cast<std::underlying_type_t<Status>>(a) | static_cast<std::underlying_type_t<Status>>(b));
 }
-constexpr inline Status operator&(Status a, Status b)
-{
-    return static_cast<Status>(static_cast<std::underlying_type_t<Status>>(a) &
-                               static_cast<std::underlying_type_t<Status>>(b));
+constexpr inline Status operator&(Status a, Status b) {
+    return static_cast<Status>(
+      static_cast<std::underlying_type_t<Status>>(a) & static_cast<std::underlying_type_t<Status>>(b));
 }
 constexpr inline Status operator|=(Status& a, const Status& b) { return a = a | b; }
 /**
  * @}
  */
 
-enum class FilterMode
-{
+enum class FilterMode {
     //!< Identifier mask mode.
     IdMask = CAN_FILTERMODE_IDMASK,
     //!< Identifier list mode.
     IdList = CAN_FILTERMODE_IDLIST,
 };
 
-enum class FilterScale
-{
+enum class FilterScale {
     //!< Two 16-bit filters.
     Scale16bit = CAN_FILTERSCALE_16BIT,
     //!< One 32-bit filter.
     Scale32bit = CAN_FILTERSCALE_32BIT,
 };
 
-enum class FilterEnable
-{
+enum class FilterEnable {
     Disable = CAN_FILTER_DISABLE,
     Enable  = CAN_FILTER_ENABLE,
 };
 
-enum class FilterFifoAssignation
-{
+enum class FilterFifoAssignation {
     //!< Filter x is assigned to FIFO 0.
     Fifo0 = CAN_FILTER_FIFO0,
     //!< Filter x is assigned to FIFO 1.
     Fifo1 = CAN_FILTER_FIFO1,
 };
 
-enum class IdentifierType
-{
+enum class IdentifierType {
     Standard = CAN_ID_STD,
     Extended = CAN_ID_EXT,
 };
 
-enum class FrameType
-{
+enum class FrameType {
     Data   = CAN_RTR_DATA,
     Remote = CAN_RTR_REMOTE,
 };
 
-enum class RxFifo
-{
+enum class RxFifo {
     //!< CAN Receive FIFO0.
     Fifo0 = CAN_RX_FIFO0,
     //!< CAN Receive FIFO1.
@@ -193,11 +182,9 @@ enum class RxFifo
 /**
  * @brief CAN filter configuration
  */
-struct FilterConfiguration
-{
+struct FilterConfiguration {
     union {
-        struct
-        {
+        struct {
             /** Specifies the filter identification number (lower 16 bits for
              *  a 32-bit filter configuration, or the second filter in a dual
              *  16-bit configuration)
@@ -210,8 +197,7 @@ struct FilterConfiguration
             uint16_t idHigh;
         };
         union {
-            struct
-            {
+            struct {
                 uint8_t : 1;
                 uint8_t  rtr : 1;
                 uint8_t  ide : 1;
@@ -224,8 +210,7 @@ struct FilterConfiguration
     } filterId;
 
     union {
-        struct
-        {
+        struct {
             /** Depending on the FilterMode, specifies either the filter's mask
              ** in mask mode or the filter's ID in list mode.
              ** (Lower 16 bits for a 32-bit filter configuration, or the
@@ -240,8 +225,7 @@ struct FilterConfiguration
             uint16_t maskIdHigh;
         };
         union {
-            struct
-            {
+            struct {
                 uint8_t : 1;
                 uint8_t  rtr : 1;
                 uint8_t  ide : 1;
@@ -266,8 +250,7 @@ struct FilterConfiguration
     FilterEnable activate = FilterEnable::Enable;
 };
 
-enum class Irq
-{
+enum class Irq {
     TxMailboxEmpty      = CAN_IT_TX_MAILBOX_EMPTY,
     Fifo0MessagePending = CAN_IT_RX_FIFO0_MSG_PENDING,
     Fifo0Full           = CAN_IT_RX_FIFO0_FULL,
@@ -284,23 +267,18 @@ enum class Irq
     ErrorStatus         = CAN_IT_ERROR,
 };
 
-struct Frame
-{
+struct Frame {
     CAN_RxHeaderTypeDef    frame;
     std::array<uint8_t, 8> data;
     uint32_t               timestamp = 0;
 
-    bool operator==(const Frame& other)
-    {
+    bool operator==(const Frame& other) {
         // If both have the same extended ID:
-        if (frame.ExtId == other.frame.ExtId)
-        {
+        if (frame.ExtId == other.frame.ExtId) {
             // For each byte of data:
-            for (size_t i = 0; i < data.size( ); i++)
-            {
+            for (size_t i = 0; i < data.size(); i++) {
                 // If the two bytes are not the same:
-                if (data[i] != other.data[i])
-                {
+                if (data[i] != other.data[i]) {
                     // Frames are different.
                     return false;
                 }
@@ -316,53 +294,45 @@ struct Frame
 };
 }    // Namespace CEP_CAN
 
-class CanModule : public cep::Module
-{
-public:
+class CanModule : public cep::Module {
+  public:
     CanModule(CAN_HandleTypeDef* handle, const std::string& label);
-    virtual ~CanModule( ) override;
+    virtual ~CanModule() override;
 
-    virtual bool               DoPost( ) override;
-    virtual void               Run( ) override;
-    virtual const std::string& GetLabel( ) const override { return m_label; }
+    virtual bool               DoPost() override;
+    virtual void               Run() override;
+    virtual const std::string& GetLabel() const override { return m_label; }
 
     void ConfigureFilter(const CEP_CAN::FilterConfiguration& config);
 
-    size_t          GetNumberOfAvailableFrames( ) const { return m_framesReceived.size( ); }
-    CEP_CAN::Frame  ReceiveFrame( );
-    CEP_CAN::Status TransmitFrame(uint32_t                    addr,
-                                  const std::vector<uint8_t>& data = std::vector<uint8_t>( ),
-                                  bool                        forceExtended = false);
-    CEP_CAN::Status TransmitFrame(uint32_t       addr,
-                                  const uint8_t* data          = nullptr,
-                                  size_t         len           = 0,
-                                  bool           forceExtended = false);
+    size_t         GetNumberOfAvailableFrames() const { return m_framesReceived.size(); }
+    CEP_CAN::Frame ReceiveFrame();
+    CEP_CAN::Status
+    TransmitFrame(uint32_t addr, const std::vector<uint8_t>& data = std::vector<uint8_t>(), bool forceExtended = false);
+    CEP_CAN::Status
+    TransmitFrame(uint32_t addr, const uint8_t* data = nullptr, size_t len = 0, bool forceExtended = false);
 
-    void SetCallback(CEP_CAN::Irq irq, const std::function<void( )>& callback);
+    void SetCallback(CEP_CAN::Irq irq, const std::function<void()>& callback);
     void ClearCallback(CEP_CAN::Irq irq);
 
     void EnableInterrupt(CEP_CAN::Irq irq);
-    void EnableInterrupts(const std::vector<CEP_CAN::Irq>& irqs)
-    {
-        for (const auto& irq : irqs)
-        {
+    void EnableInterrupts(const std::vector<CEP_CAN::Irq>& irqs) {
+        for (const auto& irq : irqs) {
             EnableInterrupt(irq);
         }
     }
     void DisableInterrupt(CEP_CAN::Irq irq);
-    void DisableInterrupts(const std::vector<CEP_CAN::Irq>& irqs)
-    {
-        for (const auto& irq : irqs)
-        {
+    void DisableInterrupts(const std::vector<CEP_CAN::Irq>& irqs) {
+        for (const auto& irq : irqs) {
             DisableInterrupt(irq);
         }
     }
 
-    void HandleIrq( );
+    void HandleIrq();
 
-private:
+  private:
     CAN_FilterTypeDef AssertAndConvertFilterStruct(const CEP_CAN::FilterConfiguration& config);
-    bool              WaitForFreeMailbox( );
+    bool              WaitForFreeMailbox();
     void              HandleFrameReception(CEP_CAN::RxFifo fifo);
     void              HandleTxMailbox0Irq(uint32_t ier);
     void              HandleTxMailbox1Irq(uint32_t ier);
@@ -373,23 +343,23 @@ private:
     void              HandleWakeupIrq(uint32_t ier);
     void              HandleErrorIrq(uint32_t ier);
 
-private:
+  private:
     CAN_HandleTypeDef* m_handle = nullptr;
     std::string        m_label  = "";
     CEP_CAN::Status    m_status = CEP_CAN::Status::ERROR_NONE;
 
     std::vector<CEP_CAN::Frame>                      m_framesReceived;
-    std::map<CEP_CAN::Irq, std::function<void( )>>   m_callbacks;
+    std::map<CEP_CAN::Irq, std::function<void()>>    m_callbacks;
     std::map<uint64_t, CEP_CAN::FilterConfiguration> m_filters;
 
     static constexpr uint32_t TIMEOUT = 15;
 };
-#        else
-#            if WARN_MISSING_STM_DRIVERS
-#                warning NilaiTFO CAN module enabled, but HAL_CAN_MODULE_ENABLED is not defined!
-#            endif
-#        endif
-#    endif
+#else
+#if WARN_MISSING_STM_DRIVERS
+#warning NilaiTFO CAN module enabled, but HAL_CAN_MODULE_ENABLED is not defined!
+#endif
+#endif
+#endif
 #endif
 /**
  * @}

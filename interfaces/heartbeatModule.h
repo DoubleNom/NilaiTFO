@@ -31,9 +31,8 @@
 /*****************************************************************************/
 /* Exported types */
 
-class HeartbeatModule : public cep::Module
-{
-public:
+class HeartbeatModule : public cep::Module {
+  public:
     HeartbeatModule(const Nilai::Defines::Pin& pin, std::string label);
     ~HeartbeatModule() override = default;
 
@@ -41,11 +40,11 @@ public:
     void                             Run() override;
     [[nodiscard]] const std::string& GetLabel() const override { return m_label; }
 
-private:
-    std::string m_label;
-    Nilai::Defines::Pin    m_led;
+  private:
+    std::string         m_label;
+    Nilai::Defines::Pin m_led;
 
-    cep::LedPattern m_defaultPattern {500, 500, -1};
+    cep::LedPattern m_defaultPattern{500, 500, -1};
 };
 
 /*****************************************************************************/

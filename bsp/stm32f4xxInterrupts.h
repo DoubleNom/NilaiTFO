@@ -34,12 +34,12 @@ enum class Interrupts
     // Window Watchdog Interrupt.
     WWDG = 0,
 #endif
-    
+
 #if defined(HAL_PWR_MODULE_ENABLED)
     // PVD through EXTI line detection interrupt.
     PVD,
 #endif
-    
+
 #if defined(HAL_RTC_MODULE_ENABLED)
     // Tamper and TimeStamp interrupts through the EXTI line.
     TAMP_STAMP,
@@ -48,17 +48,17 @@ enum class Interrupts
     // RTC Alarms (A and B) through EXTI line interrupt.
     RTC_Alarm,
 #endif
-    
+
 #if defined(HAL_FLASH_MODULE_ENABLED)
     // Flash global interrupt.
     FLASH_INT,
 #endif
-    
+
 #if defined(HAL_RCC_MODULE_ENABLED)
     // RCC global interrupt.
     RCC_INT,
 #endif
-    
+
 #if defined(HAL_EXTI_MODULE_ENABLED)
     // EXTI Line0 interrupt.
     EXTI0,
@@ -75,7 +75,7 @@ enum class Interrupts
     // EXTI Line[15:10] interrupts.
     EXTI15_10,
 #endif
-    
+
 #if defined(HAL_DMA_MODULE_ENABLED)
     // DMA1 Stream0 global interrupt.
     DMA1_Stream0_INT,
@@ -110,12 +110,12 @@ enum class Interrupts
     // DMA2 Stream7 global interrupt.
     DMA2_Stream7_INT,
 #endif
-    
+
 #if defined(HAL_ADC_MODULE_ENABLED)
     // ADC1, ADC2 and ADC3 global interrupts.
     ADC_INT,
 #endif
-    
+
 #if defined(HAL_CAN_MODULE_ENABLED) || defined(HAL_CAN_LEGACY_MODULE_ENABLED)
     // CAN1 TX interrupts.
     CAN1_TX,
@@ -134,7 +134,7 @@ enum class Interrupts
     // CAN2 SCE interrupt.
     CAN2_SCE,
 #endif
-    
+
 #if defined(HAL_TIM_MODULE_ENABLED)
     // TIM1 Break interrupt and TIM9 global interrupt.
     TIM1_BRK_TIM9,
@@ -165,7 +165,7 @@ enum class Interrupts
     // TIM8 Capture Compare interrupt.
     TIM8_CC,
 #endif
-    
+
 #if defined(HAL_I2C_MODULE_ENABLED)
     // I2C1 Event interrupt.
     I2C1_EV,
@@ -180,7 +180,7 @@ enum class Interrupts
     // I2C3 error interrupt.
     I2C3_ER,
 #endif
-    
+
 #if defined(HAL_SPI_MODULE_ENABLED)
     // SPI1 global interrupt.
     SPI1_INT,
@@ -189,7 +189,7 @@ enum class Interrupts
     // SPI3 global interrupt.
     SPI3_INT,
 #endif
-    
+
 #if defined(HAL_USART_MODULE_ENABLED)
     // USART1 global interrupt.
     USART1_INT,
@@ -212,44 +212,42 @@ enum class Interrupts
     OTG_HS_EP1_IN,
     // USB On-The-Go HS Wakeup through EXTI interrupt.
     OTG_HS_WKUP,
-    
-#if defined(HAL_NAND_MODULE_ENABLED) \
-    || defined(HAL_NOR_MODULE_ENABLED) \
-        || defined(HAL_SRAM_MODULE_ENABLED)\
-        || defined(HAL_SDRAM_MODULE_ENABLED)
+
+#if defined(HAL_NAND_MODULE_ENABLED) || defined(HAL_NOR_MODULE_ENABLED) || defined(HAL_SRAM_MODULE_ENABLED)            \
+  || defined(HAL_SDRAM_MODULE_ENABLED)
     // FSMC global interrupt.
     FSMC,
 #endif
-    
+
 #if defined(HAL_SD_MODULE_ENABLED) || defined(HAL_MMC_MODULE_ENABLED)
     // SDIO global interrupt.
     SDIO_INT,
 #endif
-    
+
 #if defined(HAL_UART_MODULE_ENABLED)
     // UART4 global interrupt.
     UART4_INT,
     // UART5 global interrupt.
     UART5_INT,
-#endif    
-    
+#endif
+
 #if defined(HAL_ETH_MODULE_ENABLED)
     // Ethernet global interrupt.
     ETH,
     // Ethernet Wakeup through EXTI line interrupt.
     ETH_WKUP,
-#endif    
-    
+#endif
+
 #if defined(HAL_DCMI_MODULE_ENABLED)
     // DCMI global interrupt.
     DCMI,
 #endif
-    
+
 #if defined(HAL_CRYP_MODULE_ENABLED)
     // CRYP crypto global interrupt.
     CRYP,
 #endif
-    
+
 #if defined(HAL_RNG_MODULE_ENABLED) || defined(HAL_HASH_MODULE_ENABLED)
     // Hash and RNG global interrup.
     HASH_RNG,

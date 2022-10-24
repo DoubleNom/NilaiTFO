@@ -29,7 +29,7 @@ void operator delete[](void* ptr, size_t);
 void* operator new(std::size_t size, const std::nothrow_t&) noexcept;
 void* operator new[](std::size_t size, const std::nothrow_t&) noexcept;
 
-void  operator delete(void* ptr, const std::nothrow_t&);
+void operator delete(void* ptr, const std::nothrow_t&);
 void operator delete[](void* ptr, const std::nothrow_t&);
 
 extern "C" void __cxa_pure_virtual(void);

@@ -25,8 +25,7 @@ extern GPIO_TypeDef GPIOG;
 extern GPIO_TypeDef GPIOH;
 extern GPIO_TypeDef GPIOI;
 
-enum GPIO_PinState
-{
+enum GPIO_PinState {
     GPIO_PIN_RESET = 0,
     GPIO_PIN_SET,
 };

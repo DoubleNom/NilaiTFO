@@ -31,8 +31,7 @@
 /*****************************************************************************/
 /* Exported types */
 namespace PCA9505 {
-enum class Pins
-{
+enum class Pins {
     p0 = 0x0000,
     p1 = 0x0001,
     p2 = 0x0002,
@@ -43,8 +42,7 @@ enum class Pins
     p7 = 0x0007
 };
 
-enum class Ports
-{
+enum class Ports {
     p0 = 0,
     p1 = 1,
     p2 = 2,
@@ -52,8 +50,7 @@ enum class Ports
     p4 = 4,
 };
 
-enum class Polarity
-{
+enum class Polarity {
     //! The input value is not inverted.
     Normal = 0,
     //! The input value is inverted.
@@ -64,16 +61,14 @@ enum class Polarity
  ** @enum   Direction
  ** @brief  The direction of the pin
  **/
-enum class Direction
-{
+enum class Direction {
     //! The pin is an output.
     Output = 0,
     //! The pin is an input.
     Input = 1,
 };
 
-enum class Interrupt
-{
+enum class Interrupt {
     //! A level change at the pin will trigger an interrupt if the pin is an input.
     Enable = 0,
     //! No interrupts will be triggered.
@@ -93,9 +88,9 @@ struct Config {
     I2cModule* i2c = nullptr;
     //! Set by hardware, between 0x40 and 0x4E.
     uint8_t                address      = 0x40;
-    Nilai::Defines::Pin               outputEnable = {};
-    Nilai::Defines::Pin               interrupt    = {};
-    Nilai::Defines::Pin               reset        = {};
+    Nilai::Defines::Pin    outputEnable = {};
+    Nilai::Defines::Pin    interrupt    = {};
+    Nilai::Defines::Pin    reset        = {};
     std::vector<PinConfig> pinConfig    = {};
 };
 
@@ -148,9 +143,9 @@ class Pca9505Module : public cep::Module {
     uint8_t     m_address;
     std::string m_label;
 
-    Nilai::Defines::Pin                          m_outputEnable;
-    Nilai::Defines::Pin                          m_interrupt;
-    Nilai::Defines::Pin                          m_reset;
+    Nilai::Defines::Pin               m_outputEnable;
+    Nilai::Defines::Pin               m_interrupt;
+    Nilai::Defines::Pin               m_reset;
     std::array<PCA9505::PortState, 5> m_ports;
     std::array<uint8_t, 5>            m_directions;
     std::array<uint8_t, 5>            m_polarities;

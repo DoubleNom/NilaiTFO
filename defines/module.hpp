@@ -15,8 +15,7 @@
 /* File includes ------------------------------------------------------------------------------- */
 #include <string>
 
-namespace cep
-{
+namespace cep {
 /*************************************************************************************************/
 /* Macros -------------------------------------------------------------------------------------- */
 
@@ -27,9 +26,8 @@ namespace cep
  * @class   Module
  * @brief   Base class to inherit from when building modules.
  */
-class Module
-{
-public:
+class Module {
+  public:
     virtual ~Module() = default;
 
     virtual bool                             DoPost()         = 0;

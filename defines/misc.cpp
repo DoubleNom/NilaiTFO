@@ -42,9 +42,7 @@ void cep::forceNullTerminationCharacter(char* string, size_t size) {
  * @param   length: the number of bytes to clear
  * @retval  None
  */
-void cep::clearArray(void* array, size_t length) {
-    memset(array, 0x00U, length);
-}
+void cep::clearArray(void* array, size_t length) { memset(array, 0x00U, length); }
 
 /**
  * @brief   Count the number of 1s in the passed bytes.

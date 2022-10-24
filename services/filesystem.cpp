@@ -18,16 +18,15 @@
 #define ASSERT_FS() CEP_ASSERT(s_data.fs != nullptr, "File system is not ready!");
 #define CHECK_IF_READY()                                                                                               \
     do {                                                                                                               \
-        if (s_data.isInit == false)                                                                                    \
-            return Result::NotReady;                                                                                   \
+        if (s_data.isInit == false) return Result::NotReady;                                                           \
     } while (0)
 
 struct FsData {
     Nilai::Defines::Pin sdPin;
-    char     sdPath[4];    //!< SD logical drive path.
-    FATFS*   fs        = nullptr;
-    bool     isInit    = false;
-    bool     isMounted = false;
+    char                sdPath[4];    //!< SD logical drive path.
+    FATFS*              fs        = nullptr;
+    bool                isInit    = false;
+    bool                isMounted = false;
 };
 
 static FsData s_data;
@@ -87,9 +86,7 @@ Result Unmount() {
     }
 }
 
-bool IsMounted() {
-    return s_data.isMounted;
-}
+bool IsMounted() { return s_data.isMounted; }
 
 Result MakeVolume(const std::string& drive, const MakeVolumeParams& params) {
     UNUSED(drive);
@@ -278,48 +275,27 @@ Result Utime(const std::string& path, const fileInfo_t* fno) {
 
 std::string ResultToStr(Result res) {
     switch (res) {
-        case Result::Ok:
-            return "OK";
-        case Result::DiskError:
-            return "Disk Error";
-        case Result::IntErr:
-            return "FATFS Internal Error";
-        case Result::NotReady:
-            return "Storage device not ready";
-        case Result::NoFile:
-            return "File not found";
-        case Result::NoPath:
-            return "Path not found";
-        case Result::InvalidName:
-            return "Path name not valid";
-        case Result::Denied:
-            return "Access denied";
-        case Result::Exist:
-            return "Object already exists";
-        case Result::InvalidObject:
-            return "Invalid object";
-        case Result::WriteProtected:
-            return "The media is write-protected";
-        case Result::InvalidDrive:
-            return "Invalid drive number";
-        case Result::NotEnabled:
-            return "Work area for the logical drive has not been mounted";
-        case Result::NoFilesystem:
-            return "No valid FAT volume found";
-        case Result::MkfsAborted:
-            return "Format aborted";
-        case Result::Timeout:
-            return "Timed out";
-        case Result::Locked:
-            return "Operation rejected by file sharing control";
-        case Result::NotEnoughCore:
-            return "Not enough memory";
-        case Result::TooManyOpenFiles:
-            return "Too many open files";
-        case Result::InvalidParameter:
-            return "Invalid Parameter";
-        default:
-            return "Unknown error";
+        case Result::Ok: return "OK";
+        case Result::DiskError: return "Disk Error";
+        case Result::IntErr: return "FATFS Internal Error";
+        case Result::NotReady: return "Storage device not ready";
+        case Result::NoFile: return "File not found";
+        case Result::NoPath: return "Path not found";
+        case Result::InvalidName: return "Path name not valid";
+        case Result::Denied: return "Access denied";
+        case Result::Exist: return "Object already exists";
+        case Result::InvalidObject: return "Invalid object";
+        case Result::WriteProtected: return "The media is write-protected";
+        case Result::InvalidDrive: return "Invalid drive number";
+        case Result::NotEnabled: return "Work area for the logical drive has not been mounted";
+        case Result::NoFilesystem: return "No valid FAT volume found";
+        case Result::MkfsAborted: return "Format aborted";
+        case Result::Timeout: return "Timed out";
+        case Result::Locked: return "Operation rejected by file sharing control";
+        case Result::NotEnoughCore: return "Not enough memory";
+        case Result::TooManyOpenFiles: return "Too many open files";
+        case Result::InvalidParameter: return "Invalid Parameter";
+        default: return "Unknown error";
     }
 }
 

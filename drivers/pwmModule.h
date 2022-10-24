@@ -25,20 +25,17 @@
 #include <string>
 #include <vector>
 
-namespace PWM
-{
-enum class Channels
-{
+namespace PWM {
+enum class Channels {
     CH1 = 0,
     CH2 = 1,
     CH3 = 2,
     CH4 = 3
 };
-}
+}    // namespace PWM
 
-class PwmModule : public cep::Module
-{
-public:
+class PwmModule : public cep::Module {
+  public:
     PwmModule(TIM_HandleTypeDef* timer, PWM::Channels channel, const std::string& label);
 
     virtual bool               DoPost() override;
@@ -55,7 +52,7 @@ public:
     void     SetDutyCycle(uint32_t percent);
     uint32_t GetDutyCycle() const { return m_activeDutyCycle; }
 
-private:
+  private:
     TIM_HandleTypeDef* m_timer   = nullptr;
     uint32_t           m_channel = 0;
     std::string        m_label   = "";

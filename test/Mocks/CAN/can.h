@@ -53,8 +53,6 @@ struct Frame {
         return false;
     }
 
-    bool operator!=(const Frame& other) {
-        return !(*this == other);
-    }
+    bool operator!=(const Frame& other) { return !(*this == other); }
 };
 }    // Namespace CEP_CAN

@@ -16,18 +16,16 @@
 /* Includes */
 #if defined(NILAI_USE_FILE_LOGGER)
 #include "defines/module.hpp"
-
-#include "services/filesystem.h"
 #include "services/file.h"
+#include "services/filesystem.h"
 
 #include <functional>
 
 
 /***********************************************/
 /* Defines */
-class FileLogger : public cep::Module
-{
-public:
+class FileLogger : public cep::Module {
+  public:
     FileLogger() = default;
     FileLogger(const std::string& label, const std::string& path = "log.txt");
     virtual ~FileLogger() override;
@@ -36,18 +34,17 @@ public:
     virtual void               Run() override;
     virtual const std::string& GetLabel() const { return m_label; }
 
-    std::function<void(const char*, size_t)> GetLogFunc()
-    {
+    std::function<void(const char*, size_t)> GetLogFunc() {
         using namespace std::placeholders;
         return std::bind(&FileLogger::Log, this, _1, _2);
     }
 
     void Flush();
 
-private:
+  private:
     void Log(const char* msg, size_t len);
 
-private:
+  private:
     std::string m_label = "";
     std::string m_path  = "";
 
@@ -61,7 +58,6 @@ private:
 
 /***********************************************/
 /* Function declarations */
-
 
 
 /**

@@ -17,16 +17,13 @@
 #if defined(NILAI_USE_FILESYSTEM)
 
 #include "defines/Core.h"
-
 #include "ff.h"
 
 #include <functional>
 #include <string>
 
-namespace cep
-{
-namespace Filesystem
-{
+namespace cep {
+namespace Filesystem {
 enum class Result;
 using file_t  = FIL;
 using fsize_t = FSIZE_t;
@@ -35,8 +32,7 @@ using fsize_t = FSIZE_t;
  * Mode flags that specifies the type of access and open method for a file.
  * Multiple flags can be combined.
  */
-enum class FileModes : uint8_t
-{
+enum class FileModes : uint8_t {
     //!< Specifies read access to the file. Data can be read from the file.
     Read = FA_READ,
     //!< Specifies write access to the file. Data can be written to the file.
@@ -58,30 +54,23 @@ enum class FileModes : uint8_t
     WRITE_APPEND  = Read | Write | OpenAppend,
 };
 
-constexpr inline FileModes operator|(FileModes a, FileModes b)
-{
-    return static_cast<FileModes>(static_cast<std::underlying_type_t<FileModes>>(a) |
-                                  static_cast<std::underlying_type_t<FileModes>>(b));
+constexpr inline FileModes operator|(FileModes a, FileModes b) {
+    return static_cast<FileModes>(
+      static_cast<std::underlying_type_t<FileModes>>(a) | static_cast<std::underlying_type_t<FileModes>>(b));
 }
-constexpr inline FileModes operator&(FileModes a, FileModes b)
-{
-    return static_cast<FileModes>(static_cast<std::underlying_type_t<FileModes>>(a) &
-                                  static_cast<std::underlying_type_t<FileModes>>(b));
+constexpr inline FileModes operator&(FileModes a, FileModes b) {
+    return static_cast<FileModes>(
+      static_cast<std::underlying_type_t<FileModes>>(a) & static_cast<std::underlying_type_t<FileModes>>(b));
 }
-constexpr inline FileModes operator|=(FileModes& a, const FileModes& b)
-{
-    return a = a | b;
-}
+constexpr inline FileModes operator|=(FileModes& a, const FileModes& b) { return a = a | b; }
 
-enum class AllocModes
-{
+enum class AllocModes {
     PrepareToAllocate = 0,
     AllocateNow       = 1,
 };
 
-class File
-{
-public:
+class File {
+  public:
     File() = default;
     File(const std::string& path, FileModes mode = FileModes::DEFAULT);
     ~File();
@@ -94,31 +83,24 @@ public:
     Result Rewind();
     Result Truncate();
     Result Sync();
-    Result Forward(const std::function<size_t(const uint8_t*, size_t)>& func,
-                   size_t                                               cntToFwd,
-                   size_t*                                              forwarded);
+    Result Forward(const std::function<size_t(const uint8_t*, size_t)>& func, size_t cntToFwd, size_t* forwarded);
     Result Expand(fsize_t newSize, AllocModes mode);
     Result GetString(std::string& outStr, size_t maxLen = 128);
     Result WriteChar(uint8_t c);
     Result WriteString(const std::string& str);
 
     template<typename... Ts>
-    Result WriteFmtString(const char* fmt, Ts... args)
-    {
+    Result WriteFmtString(const char* fmt, Ts... args) {
 #if _FS_READONLY == 0 && _USE_STRFUNC >= 1
 #if defined(DEBUG)
-        if (m_isOpen == false)
-        {
+        if (m_isOpen == false) {
             // File must be open and valid!
             CRASH;
         }
 #endif
-        if (f_printf(&m_file, fmt, args...) <= 0)
-        {
+        if (f_printf(&m_file, fmt, args...) <= 0) {
             m_status = (Result)f_error(&m_file);
-        }
-        else
-        {
+        } else {
             m_status = 0;
         }
 
@@ -139,7 +121,7 @@ public:
     bool IsOpen() const { return m_isOpen; }
          operator bool() const { return IsOpen(); }
 
-private:
+  private:
     std::string m_path = "";
     FileModes   m_mode = FileModes::Read | FileModes::OpenExisting;
     file_t      m_file;

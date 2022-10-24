@@ -31,40 +31,40 @@
  *  - Ignore Universe
  */
 #ifndef _umoModule
-#    define _umoModule
+#define _umoModule
 
 /*****************************************************************************/
 /* Includes */
-#    include "defines/module.hpp"
-#    if defined(NILAI_USE_UMO)
-#        if defined(NILAI_UMO_USE_UART)
-#            if !defined(NILAI_USE_UART)
-#                error Cannot use the UMO module without the UART module!
-#            else
-#                include "drivers/uartModule.hpp"
-#            endif
-#        elif defined(NILAI_UMO_USE_CAN)
-#            if !defined(NILAI_USE_CAN)
-#                error Cannot use the UMO module without the CAN module!
-#            else
-#                include "drivers/canModule.hpp"
-#            endif
-#        endif
+#include "defines/module.hpp"
+#if defined(NILAI_USE_UMO)
+#if defined(NILAI_UMO_USE_UART)
+#if !defined(NILAI_USE_UART)
+#error Cannot use the UMO module without the UART module!
+#else
+#include "drivers/uartModule.hpp"
+#endif
+#elif defined(NILAI_UMO_USE_CAN)
+#if !defined(NILAI_USE_CAN)
+#error Cannot use the UMO module without the CAN module!
+#else
+#include "drivers/canModule.hpp"
+#endif
+#endif
 
-#        include <array>
-#        include <string>
-#        include <vector>
+#include <array>
+#include <string>
+#include <vector>
 
 /*****************************************************************************/
 /* Exported defines */
-#        if defined(NILAI_UMO_USE_UART)
+#if defined(NILAI_UMO_USE_UART)
 using Handle_t = UartModule;
-#        elif defined(NILAI_UMO_USE_CAN)
+#elif defined(NILAI_UMO_USE_CAN)
 using Handle_t = CanModule;
-#        else
-#            error You must specify a hardware layer!
+#else
+#error You must specify a hardware layer!
 using Handle_t = void;
-#        endif
+#endif
 
 /*****************************************************************************/
 /* Exported macro */
@@ -77,8 +77,7 @@ using Handle_t = void;
  * @brief   Structure representing a Umo Universe,
  *          containing all of the 512 channels.
  */
-struct Universe
-{
+struct Universe {
     //! Number of frames since we received this universe. -1 means we haven't received it.
     int                  age      = -1;
     std::vector<uint8_t> universe = std::vector<uint8_t>(CHANNEL_COUNT);
@@ -86,27 +85,26 @@ struct Universe
     static constexpr size_t CHANNEL_COUNT = 512;
 };
 
-class UmoModule : public cep::Module
-{
-public:
+class UmoModule : public cep::Module {
+  public:
     UmoModule(Handle_t* handle, size_t universeCnt, const std::string& label);
-    virtual ~UmoModule( ) override = default;
+    virtual ~UmoModule() override = default;
 
-    virtual bool               DoPost( ) override;
-    virtual void               Run( ) override;
-    virtual const std::string& GetLabel( ) const override { return m_label; }
+    virtual bool               DoPost() override;
+    virtual void               Run() override;
+    virtual const std::string& GetLabel() const override { return m_label; }
 
     const std::vector<uint8_t>& GetUniverse(size_t universe) const;
 
     bool IsUniverseReady(size_t universe) const;
 
     std::vector<uint8_t> GetChannels(size_t universe, size_t channel, size_t size);
-    void GetChannels(size_t universe, size_t channel, uint8_t* outData, size_t size);
+    void                 GetChannels(size_t universe, size_t channel, uint8_t* outData, size_t size);
 
     void SetChannels(size_t universe, size_t channel, const std::vector<uint8_t>& data);
     void SetChannels(size_t universe, size_t channel, uint8_t* data, size_t len);
 
-private:
+  private:
     Handle_t*   m_handle = nullptr;
     std::string m_label  = "";
 
@@ -117,7 +115,7 @@ private:
 
 /*****************************************************************************/
 /* Exported functions */
-#    endif
+#endif
 /* Have a wonderful day :) */
 #endif /* _umoModule */
 /**

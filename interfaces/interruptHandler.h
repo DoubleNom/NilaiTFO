@@ -19,8 +19,7 @@
 
 #include <functional>
 
-namespace cep
-{
+namespace cep {
 /*****************************************************************************/
 /* Exported defines */
 
@@ -33,16 +32,14 @@ namespace cep
 /* Exported types */
 
 
-class InterruptHandler
-{
-public:
+class InterruptHandler {
+  public:
     InterruptHandler();
-    
+
     void BindInterruptToFunction(Interrupts interrupt, std::function<void()> func);
-    
-    
-private:
-    
+
+
+  private:
 };
 
 /*****************************************************************************/

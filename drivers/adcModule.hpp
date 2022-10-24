@@ -22,14 +22,13 @@
 #endif
 #include "shared/defines/module.hpp"
 
-class AdcModule : public cep::Module
-{
-public:
-    AdcModule(ADC_HandleTypeDef* adc, std::string  label);
+class AdcModule : public cep::Module {
+  public:
+    AdcModule(ADC_HandleTypeDef* adc, std::string label);
     ~AdcModule() override;
 
-    bool               DoPost() override;
-    void               Run() override {}
+    bool                             DoPost() override;
+    void                             Run() override { }
     [[nodiscard]] const std::string& GetLabel() const override { return m_label; }
 
     void Start();
@@ -37,7 +36,7 @@ public:
 
     [[nodiscard]] float GetChannelReading(size_t channel) const;
 
-private:
+  private:
     ADC_HandleTypeDef* m_adc          = nullptr;
     uint32_t*          m_channelBuff  = nullptr;
     size_t             m_channelCount = 0;

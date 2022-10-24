@@ -36,8 +36,7 @@ namespace LTC2498 {
 /**
  * @brief   Lists all the possible channels
  */
-enum class Channels
-{
+enum class Channels {
     CH0  = 0x00,    //!< CH0
     CH1  = 0x08,    //!< CH1
     CH2  = 0x01,    //!< CH2
@@ -59,8 +58,7 @@ enum class Channels
 /**
  * @brief   Lists the possible types of acquisition.
  */
-enum class AcquisitionTypes
-{
+enum class AcquisitionTypes {
     Differential = 0,    //!< Combines the selected channel with the next one.
     SingleEnded,         //!< Reads the selected channel referenced to the common reference.
 };
@@ -68,8 +66,7 @@ enum class AcquisitionTypes
 /**
  * @brief   The polarities for an acquisition.
  */
-enum class Polarities
-{
+enum class Polarities {
     Positive = 0,    //!< The selected channel is the positive input.
     Negative,        //!< The selected channel is the negative input.
 };
@@ -77,8 +74,7 @@ enum class Polarities
 /**
  * @brief   Lists the two types of input that can be measured.
  */
-enum class InputTypes
-{
+enum class InputTypes {
     External = 0,    //!< External channel, selected via @ref Channels.
     TempSensor,      //!< Internal temperature sensor built into the ADC.
 };
@@ -86,8 +82,7 @@ enum class InputTypes
 /**
  * @brief   The filters that can be applied to the input signal.
  */
-enum class Filters
-{
+enum class Filters {
     None = 0,    //!< No filter active.
     Hz50,        //!< 50Hz filter active.
     Hz60,        //!< 60Hz filter active.
@@ -97,8 +92,7 @@ enum class Filters
 /**
  * @brief   The different acquisition speeds.
  */
-enum class Speeds
-{
+enum class Speeds {
     x1 = 0,    //!< ~7.5 samples/second.
     x2,        //!< ~15 samples/second. This disables the auto-calibration.
 };
@@ -151,11 +145,11 @@ using CurrentConversion = std::vector<ConversionSettings>::iterator;
 class Ltc2498Module : public cep::Module {
   public:
     Ltc2498Module(
-      const std::string& label,
-      SpiModule*         spi,
-      const Nilai::Defines::Pin&    inPin,
-      const Nilai::Defines::Pin&    csPin,
-      float              vcom = 0.00f);
+      const std::string&         label,
+      SpiModule*                 spi,
+      const Nilai::Defines::Pin& inPin,
+      const Nilai::Defines::Pin& csPin,
+      float                      vcom = 0.00f);
     virtual ~Ltc2498Module() override = default;
 
     virtual bool               DoPost() override;
@@ -171,11 +165,11 @@ class Ltc2498Module : public cep::Module {
     bool StartConversion(const LTC2498::ConversionSettings& config);
 
   private:
-    std::string m_label   = "";
-    SpiModule*  m_spi     = nullptr;
-    Nilai::Defines::Pin    m_misoPin = {};
-    Nilai::Defines::Pin    m_csPin   = {};
-    float       m_vcom    = 0.00f;
+    std::string         m_label   = "";
+    SpiModule*          m_spi     = nullptr;
+    Nilai::Defines::Pin m_misoPin = {};
+    Nilai::Defines::Pin m_csPin   = {};
+    float               m_vcom    = 0.00f;
 
     std::vector<LTC2498::ConversionSettings> m_conversions       = {};
     LTC2498::CurrentConversion               m_currentConversion = m_conversions.end();

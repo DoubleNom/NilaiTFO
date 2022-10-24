@@ -1,22 +1,22 @@
 #pragma once
-#include <vector>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace Nilai::Drivers::Uart {
 
-    struct Frame {
-#            if 0
+struct Frame {
+#if 0
         uint8_t* data      = nullptr;
     size_t   len       = 0;
-#            endif
-        std::vector<uint8_t> data;
-        size_t len = 0;
-        uint32_t timestamp = 0;
+#endif
+    std::vector<uint8_t> data;
+    size_t               len       = 0;
+    uint32_t             timestamp = 0;
 
-        Frame() = default;
+    Frame() = default;
 
-#            if 0
+#if 0
         Frame(const std::vector<uint8_t>& d, uint32_t t) : timestamp(t)
     {
         data = new uint8_t[d.size()];
@@ -33,22 +33,18 @@ namespace Nilai::Drivers::Uart {
         data = nullptr;
         len  = 0;
     }
-#            endif
+#endif
 
-        Frame(const std::vector<uint8_t> &d, uint32_t t) : timestamp(t) {
-            data = d;
-            len = data.size();
-        }
+    Frame(const std::vector<uint8_t>& d, uint32_t t) : timestamp(t) {
+        data = d;
+        len  = data.size();
+    }
 
-        [[nodiscard]] std::string ToStr() const { return std::string{(char *) data.data()}; }
+    [[nodiscard]] std::string ToStr() const { return std::string{(char*)data.data()}; }
 
-        bool operator==(const std::string &s) const {
-            return (std::string((char *) data.data(), len) == s);
-        }
+    bool operator==(const std::string& s) const { return (std::string((char*)data.data(), len) == s); }
 
-        bool operator!=(const std::string &s) const {
-            return (std::string((char *) data.data(), len) != s);
-        }
-    };
+    bool operator!=(const std::string& s) const { return (std::string((char*)data.data(), len) != s); }
+};
 
-}
+}    // namespace Nilai::Drivers::Uart
