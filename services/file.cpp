@@ -18,11 +18,11 @@
 #include "services/logger.hpp"
 
 #define FS_TAG                "FS"
-#define FS_DEBUG(msg, ...)    LOGTD(FS_TAG, msg __VA_OPT__(,) __VA_ARGS__)
-#define FS_INFO(msg, ...)     LOGTI(FS_TAG, msg __VA_OPT__(,) __VA_ARGS__)
-#define FS_WARNING(msg, ...)  LOGTW(FS_TAG, msg __VA_OPT__(,) __VA_ARGS__)
-#define FS_ERROR(msg, ...)    LOGTE(FS_TAG, msg __VA_OPT__(,) __VA_ARGS__)
-#define FS_CRITICAL(msg, ...) LOGTF(FS_TAG, msg __VA_OPT__(,) __VA_ARGS__)
+#define FS_DEBUG(msg, ...)    LOGTD(FS_TAG, msg __VA_OPT__(, ) __VA_ARGS__)
+#define FS_INFO(msg, ...)     LOGTI(FS_TAG, msg __VA_OPT__(, ) __VA_ARGS__)
+#define FS_WARNING(msg, ...)  LOGTW(FS_TAG, msg __VA_OPT__(, ) __VA_ARGS__)
+#define FS_ERROR(msg, ...)    LOGTE(FS_TAG, msg __VA_OPT__(, ) __VA_ARGS__)
+#define FS_CRITICAL(msg, ...) LOGTF(FS_TAG, msg __VA_OPT__(, ) __VA_ARGS__)
 
 #define ASSERT_FILE_IS_OK()                                                                                            \
     do {                                                                                                               \
@@ -31,9 +31,7 @@
 
 namespace cep {
 namespace Filesystem {
-File::File(const std::string& path, FileModes mode)
-: m_path(path)
-, m_mode(mode) {
+File::File(const std::string& path, FileModes mode) : m_path(path), m_mode(mode) {
     m_file = file_t{};
     Open(path, mode);
 }
@@ -248,9 +246,7 @@ fsize_t File::GetSize() {
     return f_size(&m_file);
 }
 
-bool File::HasError() {
-    return !((Result)f_error(&m_file) == Result::Ok);
-}
+bool File::HasError() { return !((Result)f_error(&m_file) == Result::Ok); }
 
 }    // namespace Filesystem
 }    // namespace cep

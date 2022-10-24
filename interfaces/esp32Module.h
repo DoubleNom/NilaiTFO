@@ -45,11 +45,11 @@ enum class BootMode {
 using namespace std::literals;
 struct Firmware {
     struct File {
-        std::string name;
         uint32_t    address;
+        std::string name;
         std::string path;
 
-        File(std::string name, uint32_t address) : name(std::move(name)), address(address) { }
+        File(std::string name, uint32_t address) : address(address), name(std::move(name)) { }
     };
 
     std::string       folder;
@@ -63,7 +63,7 @@ struct Firmware {
         }
     }
 
-    std::string GetNoEraseFilePath() { return folder + "/debug"; }
+    [[nodiscard]] std::string GetNoEraseFilePath() const { return folder + "/debug"; }
 };
 
 /**
@@ -112,7 +112,7 @@ class Module : public Nilai::Drivers::Uart::Module {
      * Default firmware (empty) will disable flashing procedure.
      * @param firmware structure of the binary files
      */
-    void SetFirmware(Firmware& firmware) { m_firmware = std::move(firmware); }
+    void SetFirmware(const Firmware& firmware) { m_firmware = std::move(firmware); }
 
     /**
      * Set the user data to send to the ESP if required

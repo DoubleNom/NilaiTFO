@@ -248,17 +248,17 @@ bool Module::FlashBinary(
     }
     ESP_DEBUG("Start programming");
 
-    uint8_t payload[block_size];
-    size_t  last_block_size;
-    size_t  written = 0;
+    std::vector<uint8_t> payload = std::vector<uint8_t>(block_size);
+    size_t               last_block_size;
+    size_t               written = 0;
     do {
         Logger::Log("Flashing %02d%% [%d/%d]\r", written * 100 / file_size, written, file_size);
-        last_block_size = cb(payload);
+        last_block_size = cb(payload.data());
         if (last_block_size == 0) {
             ESP_ERROR("Failure when loading binary from source");
             return false;
         }
-        err = esp_loader_flash_write(payload, last_block_size);
+        err = esp_loader_flash_write(payload.data(), last_block_size);
         if (err != ESP_LOADER_SUCCESS) {
             ESP_ERROR("Packet could not be written! error %d", err);
             return false;

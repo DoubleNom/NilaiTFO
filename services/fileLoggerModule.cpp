@@ -11,14 +11,12 @@
 #if defined(NILAI_USE_FILE_LOGGER)
 #include "fileLoggerModule.h"
 
+#include "defines/macros.hpp"
 #include "services/logger.hpp"
 
 #include <cstring>
-#include "defines/macros.hpp"
 
-FileLogger::FileLogger(const std::string& label, const std::string& path)
-: m_label(label)
-, m_path(path) {
+FileLogger::FileLogger(const std::string& label, const std::string& path) : m_label(label), m_path(path) {
     m_logFile = cep::Filesystem::File(path, cep::Filesystem::FileModes::WRITE_APPEND);
 
     LOGTI(m_label.c_str(), "Initialized");
@@ -85,15 +83,16 @@ void FileLogger::Flush() {
     if ((r != Result::Ok) || (m_cacheLoc != dw)) {
         CEP_ASSERT(false, "Unable to write to log file: %s", ResultToStr(r).c_str());
         m_cacheLoc = 0;
+        m_logFile.Close();
         return;
     }
 
-    r = m_logFile.Close();
-    if (r != Result::Ok) {
-        CEP_ASSERT(false, "Unable to close file!");
-        m_cacheLoc = 0;
-        return;
-    }
+    //    r = m_logFile.Close();
+    //    if (r != Result::Ok) {
+    //        CEP_ASSERT(false, "Unable to close file!");
+    //        m_cacheLoc = 0;
+    //        return;
+    //    }
 
     m_cacheLoc = 0;
 }

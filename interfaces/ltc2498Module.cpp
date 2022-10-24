@@ -259,13 +259,13 @@ void Ltc2498Module::ParseConversionResult(
       = ((uint32_t)resp[0] << 24) | ((uint32_t)resp[1] << 16) | ((uint32_t)resp[2] << 8) | ((uint32_t)resp[3]);
 
     // Bit 31 is End of Conversion flag, should obviously be set to 0.
-    if ((raw & 0x80000000) == 1) {
+    if ((raw & 0x80000000)) {
         LTC_ERROR("End of conversion flag is not 0!\t0x%08X", raw);
         return;
     }
 
     // Bit 30 is a dummy bit, should always be 0.
-    if ((raw & 0x40000000) == 1) {
+    if ((raw & 0x40000000)) {
         LTC_ERROR("Dummy bit is not 0!\t0x%08X", raw);
         return;
     }

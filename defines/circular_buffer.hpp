@@ -162,8 +162,7 @@ class CircularBuffer {
     void setReadPos(size_t readPos) {
         while (readPos > m_capacity) readPos -= m_capacity;
         m_read = readPos;
-        m_size = m_write - m_read;
-        if (m_size < 0) m_size += m_capacity;
+        m_size = m_write >= m_read ? m_write - m_read : m_write - m_read + m_capacity;
     }
 
     /**
@@ -206,11 +205,11 @@ class CircularBuffer {
     bool   m_external = false;
     size_t m_capacity;    // Cannot be const, because we want default operator=
     // This is used so we have different sized buffer
-    int32_t m_read  = 0;
-    int32_t m_write = 0;
-    size_t  m_size  = 0;
+    size_t m_read  = 0;
+    size_t m_write = 0;
+    size_t m_size  = 0;
 
-    int32_t m_lastDmaCounter = 0;
+    size_t m_lastDmaCounter = 0;
 
     size_t next(size_t origin) const {
         size_t r = origin + 1;

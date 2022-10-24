@@ -61,7 +61,7 @@ Module::Module(const std::string& label, UART_HandleTypeDef* uart, size_t txl, s
     };
     m_cb = []() {
     };
-    HAL_UART_Receive_DMA(m_handle, m_rxBuff.data(), rxl);
+    HAL_UART_Receive_DMA(m_handle, m_rxBuff.data(), static_cast<uint16_t>(rxl));
     //    __HAL_UART_ENABLE_IT(m_handle, UART_IT_RXNE);
     LOGTI(label.c_str(), "Uart initialized");
 }
@@ -256,7 +256,7 @@ bool Module::ResizeDmaBuffer() {
         m_rxCirc.init(m_efl);
     }
 
-    s = HAL_UART_Receive_DMA(m_handle, m_rxBuff.data(), m_rxl);
+    s = HAL_UART_Receive_DMA(m_handle, m_rxBuff.data(), static_cast<uint16_t>(m_rxl));
     if (s != HAL_OK) {
         LOGTE(m_label.c_str(), "Unable to start the DMA stream! %i", (int)s);
         return false;
@@ -266,11 +266,7 @@ bool Module::ResizeDmaBuffer() {
 }
 
 void Module::SetTriage() {
-    static constexpr size_t lim_xof    = 5;
-    bool                    isSofEmpty = m_sof.empty();
-    bool                    isEofEmpty = m_eof.empty();
-    size_t                  sofLength  = m_sof.length();
-    size_t                  eofLength  = m_eof.length();
+    static constexpr size_t lim_xof = 5;
 
     // LEN
     if (m_efl != 0) {
