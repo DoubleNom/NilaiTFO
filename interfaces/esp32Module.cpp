@@ -11,6 +11,8 @@
 
 #include "esp32Module.h"
 
+#include <utility>
+
 #if defined(NILAI_USE_ESP32)
 #if !defined(NILAI_USE_UART)
 #error The UART module must be enabled in order to use the ESP32 Module
@@ -30,10 +32,10 @@
 
 namespace Nilai::Interfaces::Esp32 {
 
-Module::Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins, const std::string& version)
-: Nilai::Drivers::Uart::Module(label, uart, 4500, 256)
+Module::Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins, std::string  version)
+: Nilai::Drivers::Uart::Module(label, uart, 4500, 4500)
 , m_pins(pins)
-, m_version(version) {
+, m_version(std::move(version)) {
     ESP_INFO("ESP Initialized");
 }
 
@@ -96,6 +98,7 @@ bool Module::Enable(BootMode mode) {
     if (mode == BootMode::Normal) {
         SetStartOfFrameSequence("\x01\x02");
         SetEndOfFrameSequence("\x03\x04");
+        SetEscapeSequence("\033");
 
 
         // Wait for ESP to enable TPOUT
@@ -136,7 +139,7 @@ void Module::Disable() {
 }
 
 void Module::SendUserData() {
-    if (m_userData.size() != 0) Transmit((const char*)m_userData.data(), m_userData.size());    // Send the user data
+    if (!m_userData.empty()) Transmit((const char*)m_userData.data(), m_userData.size());    // Send the user data
 }
 
 bool Module::Bootloader() {
@@ -203,13 +206,13 @@ bool Module::Bootloader() {
     if (err != cep::Filesystem::Result::Ok) {
         ESP_DEBUG("Erasing firmware folder");
         for (const auto& file : m_firmware.files) {
-            err = cep::Filesystem::Unlink(file.path.c_str());
+            err = cep::Filesystem::Unlink(file.path);
             if (err != cep::Filesystem::Result::Ok) {
                 ESP_ERROR("Failed to delete folder");
                 return false;
             }
         }
-        err = cep::Filesystem::Unlink(m_firmware.folder.c_str());
+        err = cep::Filesystem::Unlink(m_firmware.folder);
         if (err != cep::Filesystem::Result::Ok) {
             ESP_ERROR("Failed to delete folder");
             return false;

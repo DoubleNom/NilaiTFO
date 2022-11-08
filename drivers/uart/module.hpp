@@ -128,7 +128,17 @@ class Module : public cep::Module {
 
     void ClearEndOfFrameSequence();
 
+    void SetEscapeSequence(const std::string& esc);
+
+    void SetEscapeSequence(const std::vector<uint8_t>& esc);
+
+    void SetEscapeSequence(uint8_t* esc, size_t len);
+
+    void ClearEscapeSequence();
+
     void FlushRecv();
+
+    UART_HandleTypeDef* getHandle();
 
   private:
     bool WaitUntilTransmissionComplete(uint32_t timeout = TX_TIMEOUT);
@@ -137,12 +147,23 @@ class Module : public cep::Module {
 
     void SetTriage();
 
-    void SearchFrame(
-      std::vector<uint8_t> data,
-      std::vector<uint8_t> pattern,
-      std::vector<size_t>& result,
-      size_t               max_depth = 0,
-      size_t               offset    = 0);
+    static bool Match(const std::vector<uint8_t>& challenge, const uint8_t* input_str, std::size_t input_len);
+
+    static std::vector<std::size_t> FindMatch(
+      const std::vector<uint8_t>& challenge,
+      const uint8_t*              input_str,
+      std::size_t                 input_len,
+      std::size_t                 max_len);
+
+    static std::vector<std::size_t> ExcludeEscaped(
+      const std::vector<std::size_t>& xofs,
+      const std::vector<std::size_t>& escs);
+
+    void escape(std::vector<uint8_t>& buf, const uint8_t* data, std::size_t size);
+
+    std::vector<uint8_t> unescape(const uint8_t* data, std::size_t size);
+
+    static void append(std::vector<uint8_t>& buf, const std::vector<uint8_t>& str);
 
   protected:
     std::string m_label;
@@ -152,9 +173,10 @@ class Module : public cep::Module {
 
     Status m_status = Status::Ok;
 
-    std::string m_sof;        // start of frame
-    std::string m_eof;        // end of frame
-    size_t      m_efl = 0;    // expected frame length
+    std::vector<uint8_t> m_sof;        // start of frame
+    std::vector<uint8_t> m_eof;        // end of frame
+    std::vector<uint8_t> m_esc;        // escape
+    size_t               m_efl = 0;    // expected frame length
 
     size_t m_txl;    // transmission buffer size
     size_t m_rxl;    // reception buffer size
@@ -162,6 +184,7 @@ class Module : public cep::Module {
     size_t                  m_sBuffId = 0;    // Static buffer id
     std::vector<uint8_t>    m_txBuff;         // transmission buffer
     std::vector<uint8_t>    m_rxBuff;         // reception buffer
+    std::vector<uint8_t>    m_escBuff;        // escape buffer
     CircularBuffer<uint8_t> m_rxCirc;         // circular read access for reception buffer
     CircularBuffer<Frame>   m_rxFrames;       // reception frame buffer
 

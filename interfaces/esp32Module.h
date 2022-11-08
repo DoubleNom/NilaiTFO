@@ -81,7 +81,7 @@ struct Pins {
 
 class Module : public Nilai::Drivers::Uart::Module {
   public:
-    Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins, const std::string& version);
+    Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins, std::string  version);
 
     ~Module() override = default;
 

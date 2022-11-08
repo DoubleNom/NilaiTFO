@@ -24,11 +24,7 @@
 #include <algorithm>
 #include <cstdarg>    // For va_list.
 #include <cstdio>
-#include <cstring>
-#include <iterator>
-#include <ranges>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace Nilai::Drivers::Uart {
@@ -47,6 +43,7 @@ Module::Module(const std::string& label, UART_HandleTypeDef* uart, size_t txl, s
 
     m_sof.reserve(2);
     m_eof.reserve(2);
+    m_esc.reserve(1);
 
     if (uart->hdmarx != nullptr) {
         m_run = [&]() {
@@ -87,18 +84,10 @@ void Module::Transmit(const uint8_t* msg, size_t len) {
         return;
     }
 
-    // Copy the message into the transmission buffer.
-    m_txBuff.resize(len + m_sof.length() + m_eof.length());
-    uint8_t* ptr = m_txBuff.data();
-    if (!m_sof.empty()) {
-        memcpy(ptr, m_sof.data(), m_sof.length());
-        ptr += m_sof.length();
-    }
-    memcpy(ptr, msg, len);
-    ptr += len;
-    if (!m_eof.empty()) {
-        memcpy(ptr, m_eof.data(), m_eof.length());
-    }
+    m_txBuff.clear();
+    append(m_txBuff, m_sof);
+    escape(m_txBuff, msg, len);
+    append(m_txBuff, m_eof);
 
     // Send the message.
     if (HAL_UART_Transmit_IT(m_handle, m_txBuff.data(), (uint16_t)m_txBuff.size()) != HAL_OK) {
@@ -184,7 +173,7 @@ void Module::SetFrameReceiveCpltCallback(const std::function<void()>& cb) {
 void Module::ClearFrameReceiveCpltCallback() { m_cb = std::function<void()>(); }
 
 void Module::SetStartOfFrameSequence(const std::string& sof) {
-    m_sof = sof;
+    m_sof = {sof.begin(), sof.end()};
     SetTriage();
 }
 
@@ -198,13 +187,10 @@ void Module::SetStartOfFrameSequence(uint8_t* sof, size_t len) {
     SetStartOfFrameSequence(std::string(sof, sof + len));
 }
 
-void Module::ClearStartOfFrameSequence() {
-    m_sof = "";
-    SetTriage();
-}
+void Module::ClearStartOfFrameSequence() { SetStartOfFrameSequence(""); }
 
 void Module::SetEndOfFrameSequence(const std::string& eof) {
-    m_eof = eof;
+    m_eof = {eof.begin(), eof.end()};
     SetTriage();
 }
 
@@ -218,15 +204,28 @@ void Module::SetEndOfFrameSequence(uint8_t* eof, size_t len) {
     SetEndOfFrameSequence(std::string(eof, eof + len));
 }
 
-void Module::ClearEndOfFrameSequence() {
-    m_eof = "";
+void Module::ClearEndOfFrameSequence() { SetEndOfFrameSequence(""); }
+
+
+void Module::SetEscapeSequence(const std::string& esc) {
+    m_esc = {esc.begin(), esc.end()};
     SetTriage();
 }
+
+void Module::SetEscapeSequence(const std::vector<uint8_t>& esc) {
+    SetEscapeSequence(std::string{esc.begin(), esc.end()});
+}
+
+void Module::SetEscapeSequence(uint8_t* esc, size_t len) { SetEscapeSequence(std::string{esc, esc + len}); }
+
+void Module::ClearEscapeSequence() { SetEscapeSequence(""); }
 
 void Module::FlushRecv() {
     m_rxCirc.dmaCounter(__HAL_DMA_GET_COUNTER(m_handle->hdmarx));
     m_rxCirc.setReadPos(m_rxl - __HAL_DMA_GET_COUNTER(m_handle->hdmarx) - 1);
 }
+
+UART_HandleTypeDef* Module::getHandle() { return m_handle; }
 
 /*************************************************************************************************/
 /* Private method definitions */
@@ -282,19 +281,21 @@ void Module::SetTriage() {
         };
     }
     // SOF
-    else if (!m_sof.empty() && m_eof.empty()) {
+    else if (!m_sof.empty() && m_eof.empty() && !m_esc.empty()) {
         LOGTI(m_label.c_str(), "Triage: SOF");
         m_triage = [&]() {
             std::vector<uint8_t> data(m_rxCirc.size());
-            std::vector<size_t>  sofs;
             m_rxCirc.peek(data.data(), m_rxCirc.size());
-            SearchFrame(data, std::vector<uint8_t>{m_sof.begin(), m_sof.end()}, sofs, lim_xof);
+
+            std::vector<std::size_t> sofs = FindMatch(m_sof, data.data(), data.size(), lim_xof);
+            std::vector<std::size_t> escs = FindMatch(m_esc, data.data(), data.size(), lim_xof);
+            sofs                          = ExcludeEscaped(sofs, escs);
 
             // Enough sof for adding frames
             if (sofs.size() > 1) {
                 for (size_t i = 0; i < sofs.size() - 1; ++i) {
                     m_rxFrames.push(
-                      {std::vector<uint8_t>(data.begin() + sofs[i] + m_sof.size(), data.begin() + sofs[i + 1]),
+                      {unescape(data.data() + sofs[i] + m_sof.size(), sofs[i + 1] - sofs[i] + m_sof.size()),
                        HAL_GetTick()});
                 }
                 m_rxCirc.pop(sofs[sofs.size() - 1]);    // removed processed frames
@@ -303,19 +304,20 @@ void Module::SetTriage() {
         };
     }
     // EOF
-    else if (m_sof.empty() && !m_eof.empty()) {
+    else if (m_sof.empty() && !m_eof.empty() && !m_esc.empty()) {
         LOGTI(m_label.c_str(), "Triage: EOF");
         m_triage = [&]() {
             std::vector<uint8_t> data(m_rxCirc.size());
-            std::vector<size_t>  eofs;
-            data.resize(m_rxCirc.size());
             m_rxCirc.peek(data.data(), m_rxCirc.size());
-            SearchFrame(data, {m_eof.begin(), m_eof.end()}, eofs, lim_xof);
+
+            std::vector<size_t> eofs = FindMatch(m_eof, data.data(), data.size(), lim_xof);
+            std::vector<size_t> escs = FindMatch(m_esc, data.data(), data.size(), lim_xof);
+            eofs                     = ExcludeEscaped(eofs, escs);
 
             if (!eofs.empty()) {
                 size_t lastEof = 0;
                 for (auto eof : eofs) {
-                    m_rxFrames.push({std::vector<uint8_t>(data.begin() + lastEof, data.begin() + eof), HAL_GetTick()});
+                    m_rxFrames.push({unescape(data.data() + lastEof, eof - lastEof), HAL_GetTick()});
                     lastEof = eof + m_eof.size();
                 }
                 m_rxCirc.pop(eofs.back() + m_eof.size());    // removed processed frames
@@ -324,16 +326,16 @@ void Module::SetTriage() {
         };
     }
     // SOF & EOF
-    else if (!m_sof.empty() && !m_eof.empty()) {
+    else if (!m_sof.empty() && !m_eof.empty() && !m_esc.empty()) {
         LOGTI(m_label.c_str(), "Triage: SOF&EOF");
         m_triage = [&]() {
             std::vector<uint8_t> data(m_rxCirc.size());
-            std::vector<size_t>  sofs;
-            std::vector<size_t>  eofs;
-            data.resize(m_rxCirc.size());
             m_rxCirc.peek(data.data(), m_rxCirc.size());
-            SearchFrame(data, {m_sof.begin(), m_sof.end()}, sofs, lim_xof);
-            SearchFrame(data, {m_eof.begin(), m_eof.end()}, eofs, lim_xof);
+            std::vector<size_t> sofs = FindMatch(m_sof, data.data(), data.size(), lim_xof);
+            std::vector<size_t> eofs = FindMatch(m_eof, data.data(), data.size(), lim_xof);
+            std::vector<size_t> escs = FindMatch(m_esc, data.data(), data.size(), lim_xof);
+            sofs                     = ExcludeEscaped(sofs, escs);
+            eofs                     = ExcludeEscaped(eofs, escs);
             std::vector<Interval> intervals;
             for (auto start : sofs) {
                 for (auto end : eofs) {
@@ -343,14 +345,15 @@ void Module::SetTriage() {
                     if (!intervals.empty() && intervals.back().end) {
                         intervals.pop_back();
                     }
-                    intervals.emplace_back(start, end);
+                    intervals.push_back({start, end});
                     break;
                 }
             }
             for (auto interval : intervals) {
-                m_rxFrames.push(
-                  {std::vector<uint8_t>(data.begin() + interval.start + m_sof.size(), data.begin() + interval.end),
-                   HAL_GetTick()});
+                uint8_t*             start = data.data() + interval.start + m_sof.size();
+                std::size_t          len   = interval.end - interval.start - m_sof.size();
+                std::vector<uint8_t> vec   = unescape(start, len);
+                m_rxFrames.push({vec, HAL_GetTick()});
             }
             if (!intervals.empty()) {
                 m_rxCirc.pop(eofs.back() + m_eof.size());
@@ -362,27 +365,87 @@ void Module::SetTriage() {
     else {
         LOGTW(m_label.c_str(), "Triage disabled");
         LOGTD(m_label.c_str(), "LEN: %d", m_efl);
-        LOGTD(m_label.c_str(), "SOF: %s", m_sof.empty() ? "[None]" : m_sof.c_str());
-        LOGTD(m_label.c_str(), "EOF: %s", m_eof.empty() ? "[None]" : m_eof.c_str());
+        LOGTD(m_label.c_str(), "SOF: %s", m_sof.empty() ? "[None]" : std::string(m_sof.begin(), m_sof.end()).c_str());
+        LOGTD(m_label.c_str(), "EOF: %s", m_eof.empty() ? "[None]" : std::string(m_eof.begin(), m_eof.end()).c_str());
+        LOGTD(m_label.c_str(), "ESC: %s", m_esc.empty() ? "[None]" : std::string(m_esc.begin(), m_esc.end()).c_str());
         m_triage = [&]() {
         };
     }
 }
 
-void Module::SearchFrame(
-  std::vector<uint8_t> data,
-  std::vector<uint8_t> pattern,
-  std::vector<size_t>& result,
-  size_t               max_depth,
-  size_t               offset) {
-    auto found = std::ranges::search(std::ranges::subrange(data.begin() + offset, data.end()), pattern);
-    if (found.empty()) return;
+bool Module::Match(const std::vector<uint8_t>& challenge, const uint8_t* input_str, std::size_t input_len) {
+    if (input_len < challenge.size()) return false;
+    for (std::size_t i = 0; i < input_len && i < challenge.size(); ++i) {
+        if (challenge[i] != input_str[i]) return false;
+    }
+    return true;
+}
 
-    auto start = std::distance(data.begin(), found.begin());
-    auto end   = std::distance(data.begin(), found.end());
-    result.push_back(start);
+std::vector<std::size_t> Module::FindMatch(
+  const std::vector<uint8_t>& challenge,
+  const uint8_t*              input_str,
+  std::size_t                 input_len,
+  std::size_t                 depth) {
+    std::vector<std::size_t> matches;
+    matches.reserve(depth);
+    for (std::size_t i = 0; i < input_len; ++i) {
+        if (Match(challenge, input_str + i, input_len - i)) {
+            matches.push_back(i);
+            if (matches.size() >= depth) break;
+        }
+    }
+    return matches;
+}
 
-    if ((max_depth == 0) || (result.size() < max_depth)) SearchFrame(data, pattern, result, max_depth, end);
+std::vector<std::size_t> Module::ExcludeEscaped(
+  const std::vector<std::size_t>& xofs,
+  const std::vector<std::size_t>& escs) {
+    std::vector<std::size_t> iofs;
+    iofs.reserve(xofs.size());
+    for (const auto& xof : xofs) {
+        bool escaped = false;
+        for (const auto& esc : escs) {
+            if (xof - 1 == esc) {
+                escaped = true;
+                break;
+            }
+        }
+        if (!escaped) iofs.push_back(xof);
+    }
+    return iofs;
+}
+
+void Module::append(std::vector<uint8_t>& buf, const std::vector<uint8_t>& str) {
+    for (const auto c : str) buf.push_back(c);
+}
+
+void Module::escape(std::vector<uint8_t>& buf, const uint8_t* data, std::size_t size) {
+    for (std::size_t i = 0; i < size; ++i) {
+        for (const std::vector<uint8_t>& challenge : {m_sof, m_eof, m_esc}) {
+            if (Match(challenge, data + i, size - i)) {
+                append(buf, m_esc);
+            }
+        }
+        buf.push_back(data[i]);
+    }
+}
+
+std::vector<uint8_t> Module::unescape(const uint8_t* data, std::size_t size) {
+    std::vector<uint8_t> buf;
+    for (std::size_t i = 0; i < size; ++i) {
+        if (Match(m_esc, data + i, size - i)) {
+            i += m_esc.size();
+            for (const std::vector<uint8_t>& challenge : {m_sof, m_eof, m_esc}) {
+                if (Match(challenge, data + i, size - i)) {
+                    append(buf, challenge);
+                    i += challenge.size() - 1;    // -1 because we will increment right after
+                }
+            }
+        } else {
+            buf.push_back(data[i]);
+        }
+    }
+    return buf;
 }
 
 /*************************************************************************************************/

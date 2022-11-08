@@ -48,7 +48,8 @@ extern "C" {
     esp_loader_error_t loader_port_serial_write(const uint8_t* data, uint16_t size, uint32_t timeout) {
         serial_debug_print(data, size, true);
 
-        return uart->Transmit(data, size, timeout) ? ESP_LOADER_SUCCESS : ESP_LOADER_ERROR_TIMEOUT;
+        return HAL_UART_Transmit(uart->getHandle(), data, size, timeout) == HAL_OK ? ESP_LOADER_SUCCESS
+                                                                         : ESP_LOADER_ERROR_TIMEOUT;
     }
 
     esp_loader_error_t loader_port_serial_read(uint8_t* data, uint16_t size, uint32_t timeout) {
@@ -104,6 +105,7 @@ void loader_port_nilai_init(Nilai::Drivers::Uart::Module* _uart, Nilai::Defines:
     boot = _boot;
     uart->ClearStartOfFrameSequence();
     uart->ClearEndOfFrameSequence();
+    uart->ClearEscapeSequence();
     uart->ClearExpectedRxLen();
 }
 
