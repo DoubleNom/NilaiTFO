@@ -375,7 +375,7 @@ void Module::SetTriage() {
 
 bool Module::Match(const std::vector<uint8_t>& challenge, const uint8_t* input_str, std::size_t input_len) {
     if (input_len < challenge.size()) return false;
-    for (std::size_t i = 0; i < input_len; ++i) {
+    for (std::size_t i = 0; i < challenge.size(); ++i) {
         if (challenge[i] != input_str[i]) return false;
     }
     return true;
