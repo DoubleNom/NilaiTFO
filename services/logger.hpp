@@ -104,6 +104,11 @@
       color LOG_TIME_FORMAT LOG_LEVEL_WRAPPER(level) LOG_TAG_FORMAT " " msg LOG_COLOR_NONE "\r\n" LOG_TIME_ARGS,       \
       tag                                                                   __VA_OPT__(, ) __VA_ARGS__)
 
+#define LOG_HELPER_TAG_NO_RETURN(tag, msg, level, color, ...)                                                          \
+    Logger::Log(                                                                                                       \
+      color LOG_TIME_FORMAT LOG_LEVEL_WRAPPER(level) LOG_TAG_FORMAT " " msg LOG_COLOR_NONE "\r" LOG_TIME_ARGS,         \
+      tag                                                                   __VA_OPT__(, ) __VA_ARGS__)
+
 #if defined(NILAI_LOGGER_ENABLE_DEBUG) && defined(INT_NILAI_LOG_IMPL_OK)
 #define LOGD(msg, ...)       LOG_HELPER(msg, LOG_LEVEL_DEBUG, LOG_COLOR_DEBUG __VA_OPT__(, ) __VA_ARGS__)
 #define LOGTD(tag, msg, ...) LOG_HELPER_TAG(tag, msg, LOG_LEVEL_DEBUG, LOG_COLOR_DEBUG __VA_OPT__(, ) __VA_ARGS__)
@@ -114,10 +119,15 @@
 
 #if defined(NILAI_LOGGER_ENABLE_INFO) && defined(INT_NILAI_LOG_IMPL_OK)
 #define LOGI(msg, ...)       LOG_HELPER(msg, LOG_LEVEL_INFO, LOG_COLOR_INFO __VA_OPT__(, ) __VA_ARGS__)
+#define LOGINR(msg, ...)     LOG_HELPER_NO_RETURN(msg, LOG_LEVEL_INFO, LOG_COLOR_INFO __VA_OPT__(, ) __VA_ARGS__)
 #define LOGTI(tag, msg, ...) LOG_HELPER_TAG(tag, msg, LOG_LEVEL_INFO, LOG_COLOR_INFO __VA_OPT__(, ) __VA_ARGS__)
+#define LOGTINR(tag, msg, ...)                                                                                         \
+    LOG_HELPER_TAG_NO_RETURN(tag, msg, LOG_LEVEL_INFO, LOG_COLOR_INFO __VA_OPT__(, ) __VA_ARGS__)
 #else
 #define LOGI(msg, ...)
+#define LOGINR(msg, ...)
 #define LOGTI(tag, msg, ...)
+#define LOGTINR(tag, msg, ...)
 #endif
 
 #if defined(NILAI_LOGGER_ENABLE_WARN) && defined(INT_NILAI_LOG_IMPL_OK)

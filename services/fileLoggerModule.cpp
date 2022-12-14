@@ -87,12 +87,12 @@ void FileLogger::Flush() {
         return;
     }
 
-    //    r = m_logFile.Close();
-    //    if (r != Result::Ok) {
-    //        CEP_ASSERT(false, "Unable to close file!");
-    //        m_cacheLoc = 0;
-    //        return;
-    //    }
+    r = m_logFile.Close();
+    if (r != Result::Ok) {
+        CEP_ASSERT(false, "Unable to close file!");
+        m_cacheLoc = 0;
+        return;
+    }
 
     m_cacheLoc = 0;
 }
