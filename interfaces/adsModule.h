@@ -15,10 +15,10 @@
 #if defined(NILAI_USE_ADS) && defined(NILAI_USE_SPI)
 /*****************************************************************************/
 /* Includes */
-#include "shared/defines/misc.hpp"
-#include "shared/defines/module.hpp"
-#include "shared/drivers/spiModule.hpp"
-#include "shared/interfaces/adsModuleConfig.h"
+#include <defines/misc.hpp>
+#include <defines/module.hpp>
+#include <drivers/spiModule.hpp>
+#include <interfaces/adsModuleConfig.h>
 
 #include <string>
 #include <vector>

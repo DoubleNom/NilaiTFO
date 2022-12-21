@@ -12,15 +12,10 @@
 #define GUARD_ADCMODULE_HPP
 
 #if defined(NILAI_USE_ADC)
-#include "defines/internalConfig.h"
+#include <defines/internalConfig.h>
 #include NILAI_HAL_HEADER
 #if defined(HAL_ADC_MODULE_ENABLED)
-#if !defined(NILAI_TEST)
-#include "Core/Inc/adc.h"
-#else
-#include "test/Mocks/adc.h"
-#endif
-#include "shared/defines/module.hpp"
+#include <defines/module.hpp>
 
 class AdcModule : public cep::Module {
   public:

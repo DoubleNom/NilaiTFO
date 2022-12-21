@@ -15,12 +15,8 @@
 
 /*****************************************************************************/
 /* Includes */
-#if !defined(NILAI_TEST)
-#include "Core/Inc/gpio.h"
-#else
-#include "test/Mocks/GPIO/gpio.h"
-#endif
-
+#include <defines/internalConfig.h>
+#include NILAI_HAL_HEADER
 #include <cstdint>
 
 namespace Nilai::Defines {
