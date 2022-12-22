@@ -18,9 +18,9 @@
 #endif
 /***********************************************/
 /* Includes */
-#include "shared/defines/module.hpp"
+#include <defines/module.hpp>
 
-#include "shared/drivers/uartModule.hpp"
+#include <drivers/uartModule.hpp>
 
 
 /***********************************************/

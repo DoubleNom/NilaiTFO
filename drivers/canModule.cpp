@@ -152,7 +152,7 @@ void CanModule::ClearCallback(CEP_CAN::Irq irq)
     m_callbacks[irq] = std::function<void()>();
 }
 
-void CanModule::EnableInterrupt(CEP_CAN::Irq irq)
+void CanModule:: EnableInterrupt(CEP_CAN::Irq irq)
 {
     __HAL_CAN_ENABLE_IT(m_handle, (uint32_t)irq);
 }
@@ -613,9 +613,9 @@ CanModule::AssertAndConvertFilterStruct(const CEP_CAN::FilterConfiguration& conf
 bool CanModule::WaitForFreeMailbox()
 {
     uint32_t timeout = HAL_GetTick() + CanModule::TIMEOUT;
-
     while (HAL_GetTick() <= timeout)
     {
+        HAL_Delay(1);
         if (HAL_CAN_GetTxMailboxesFreeLevel(m_handle) != 0)
         {
             return true;

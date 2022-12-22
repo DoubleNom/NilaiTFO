@@ -14,8 +14,8 @@
 /*************************************************************************************************/
 /* Includes ------------------------------------------------------------------------------------ */
 #if 0
-#include "shared/defines/pch.hpp"
-#include "shared/defines/module.hpp"
+#include <defines/pch.hpp>
+#include <defines/module.hpp>
 
 #include <functional>
 #include <string_view>

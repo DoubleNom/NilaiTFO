@@ -11,7 +11,7 @@
 #if defined(NILAI_USE_RN2903)
 #include "rn2903Module.h"
 
-#include "shared/defines/macros.hpp"
+#include <defines/macros.hpp>
 
 #define RN2903_INFO(msg, ...)  LOG_INFO("[%s]: " msg, m_label.c_str(), ##__VA_ARGS__)
 #define RN2903_ERROR(msg, ...) LOG_ERROR("[%s]: " msg, m_label.c_str(), ##__VA_ARGS__)

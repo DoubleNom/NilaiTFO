@@ -4,8 +4,8 @@
 #include "defines/internalConfig.h"
 #include NILAI_HAL_HEADER
 #if defined(HAL_ADC_MODULE_ENABLED)
-#include "Core/Inc/adc.h"
-#include "shared/defines/module.hpp"
+#include <adc.h>
+#include <defines/module.hpp>
 
 class AdcModule : public cep::Module
 {

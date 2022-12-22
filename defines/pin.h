@@ -15,7 +15,7 @@
 
 /*****************************************************************************/
 /* Includes */
-#include "Core/Inc/gpio.h"
+#include <gpio.h>
 
 #include <cstdint>
 
