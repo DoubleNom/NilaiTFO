@@ -20,6 +20,12 @@
 
 #include <algorithm>
 
+#define CAN_DEBUG_EN
+#ifdef CAN_DEBUG_EN
+#define CAN_DEBUG(msg, ...) LOGTD(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
+#else
+#define CAN_DEBUG(msg, ...)
+#endif
 #define CAN_ERROR(msg, ...) LOGTE(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
 
 CanModule::CanModule(CAN_HandleTypeDef* handle, const std::string& label) : m_handle(handle), m_label(label) {
@@ -74,6 +80,7 @@ void CanModule::ConfigureFilter(const CEP_CAN::FilterConfiguration& config) {
 CEP_CAN::Frame CanModule::ReceiveFrame() {
     CEP_CAN::Frame frame = m_framesReceived.back();
     m_framesReceived.pop_back();
+    LOGTD("DEBUG", "Reading a frame %x", frame.frame.StdId);
     return frame;
 }
 CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const std::vector<uint8_t>& data, bool forceExtended) {
@@ -148,6 +155,8 @@ void CanModule::HandleFrameReception(CEP_CAN::RxFifo fifo) {
     frame.timestamp = HAL_GetTick();
 
     m_framesReceived.push_back(frame);
+
+    CAN_DEBUG("Received CAN frame. ID: %x", frame.frame.StdId);
 
     switch (fifo) {
         case CEP_CAN::RxFifo::Fifo0:
