@@ -255,7 +255,6 @@ bool Module::FlashBinary(
     size_t               last_block_size;
     size_t               written = 0;
     do {
-        Logger::Log("Flashing %02d%% [%d/%d]\r", written * 100 / file_size, written, file_size);
         last_block_size = cb(payload.data());
         if (last_block_size == 0) {
             ESP_ERROR("Failure when loading binary from source");
@@ -266,8 +265,13 @@ bool Module::FlashBinary(
             ESP_ERROR("Packet could not be written! error %d", err);
             return false;
         }
+        if(written % 1024 == 0) {
+            Logger::Log("Flashing %02d%% [%d/%d]\r", written * 100 / file_size, written, file_size);
+            m_flashProgressCallback(written, file_size);
+        }
         written += last_block_size;
     } while (written < file_size);
+    m_flashProgressCallback(file_size, file_size);
     ESP_DEBUG("Finished programming");
 
     err = esp_loader_flash_verify();

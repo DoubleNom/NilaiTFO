@@ -34,113 +34,120 @@ namespace Nilai::Interfaces::Esp32 {
 /**
  * Boot modes for the ESP32.
  */
-enum class BootMode {
-    Bootloader = 0,    //!< Bootloader
-    Normal     = 1,    //!< Normal
-};
+    enum class BootMode {
+        Bootloader = 0,    //!< Bootloader
+        Normal = 1,    //!< Normal
+    };
 
 /**
  * Firmware files for flashing ESP32
  */
-using namespace std::literals;
-struct Firmware {
-    struct File {
-        uint32_t    address;
-        std::string name;
-        std::string path;
+    using namespace std::literals;
 
-        File(std::string name, uint32_t address) : address(address), name(std::move(name)) { }
-    };
+    struct Firmware {
+        struct File {
+            uint32_t address;
+            std::string name;
+            std::string path;
 
-    std::string       folder;
-    std::vector<File> files;
+            File(std::string name, uint32_t address) : address(address), name(std::move(name)) {}
+        };
 
-    Firmware() = default;
+        std::string folder;
+        std::vector<File> files;
 
-    Firmware(std::string folder, std::vector<File> files) : folder(std::move(folder)), files(std::move(files)) {
-        for (auto& file : this->files) {
-            file.path = this->folder + "/" + file.name;
+        Firmware() = default;
+
+        Firmware(std::string folder, std::vector<File> files) : folder(std::move(folder)), files(std::move(files)) {
+            for (auto &file: this->files) {
+                file.path = this->folder + "/" + file.name;
+            }
         }
-    }
 
-    [[nodiscard]] std::string GetNoEraseFilePath() const { return folder + "/debug"; }
-};
+        [[nodiscard]] std::string GetNoEraseFilePath() const { return folder + "/debug"; }
+    };
 
 /**
  * Contains all the control pins of the ESP32 module.
  */
-struct Pins {
-    Nilai::Defines::Pin enable = {};    //!< Enable pin of the ESP32. When high, the ESP32 is enabled.
-    Nilai::Defines::Pin boot   = {};    /**< Boot selection pin.
+    struct Pins {
+        Nilai::Defines::Pin enable = {};    //!< Enable pin of the ESP32. When high, the ESP32 is enabled.
+        Nilai::Defines::Pin boot = {};    /**< Boot selection pin.
                                          *   When high, normal boot.
                                          *   When low, runs the bootloader.
                                          */
-    Nilai::Defines::Pin tpout = {};     //!< Heartbeat pin from the ESP32 to the STM32.
-    Nilai::Defines::Pin tpin  = {};     //!< Debug signal from the STM32 to the ESP32, currently not used.
-};
+        Nilai::Defines::Pin tpout = {};     //!< Heartbeat pin from the ESP32 to the STM32.
+        Nilai::Defines::Pin tpin = {};     //!< Debug signal from the STM32 to the ESP32, currently not used.
+    };
 
-class Module : public Nilai::Drivers::Uart::Module {
-  public:
-    Module(const std::string& label, UART_HandleTypeDef* uart, const Pins& pins, std::string  version);
+    class Module : public Nilai::Drivers::Uart::Module {
+    public:
+        Module(const std::string &label, UART_HandleTypeDef *uart, const Pins &pins, std::string version);
 
-    ~Module() override = default;
+        ~Module() override = default;
 
-    bool DoPost() override;
+        bool DoPost() override;
 
-    void Run() override;
+        void Run() override;
 
-    /**
-     * Enables the ESP32 through the enable pin.
-     * Will reset the ESP during process
-     * @return true on successfull boot
-     */
-    bool Enable(BootMode mode = BootMode::Normal);
+        /**
+         * Enables the ESP32 through the enable pin.
+         * Will reset the ESP during process
+         * @return true on successfull boot
+         */
+        bool Enable(BootMode mode = BootMode::Normal);
 
-    /**
-     * Disables the ESP32 through the enable pin.
-     */
-    void Disable();
+        /**
+         * Disables the ESP32 through the enable pin.
+         */
+        void Disable();
 
-    /**
-     * Checks if the ESP32 is currently enabled.
-     * @return True if the ESP32 is enabled, false otherwise.
-     */
-    [[nodiscard]] bool IsEnabled() const { return m_pins.enable.Get(); }
+        /**
+         * Checks if the ESP32 is currently enabled.
+         * @return True if the ESP32 is enabled, false otherwise.
+         */
+        [[nodiscard]] bool IsEnabled() const { return m_pins.enable.Get(); }
 
-    /**
-     * Set Firmware used for flashing ESP on POST
-     * Default firmware (empty) will disable flashing procedure.
-     * @param firmware structure of the binary files
-     */
-    void SetFirmware(const Firmware& firmware) { m_firmware = std::move(firmware); }
+        /**
+         * Set Firmware used for flashing ESP on POST
+         * Default firmware (empty) will disable flashing procedure.
+         * @param firmware structure of the binary files
+         */
+        void SetFirmware(const Firmware &firmware) { m_firmware = std::move(firmware); }
 
-    /**
-     * Set the user data to send to the ESP if required
-     * @param data byte array to send to the ESP
-     * @param len length of the array
-     */
-    void SetUserData(uint8_t* data, size_t len) { m_userData.insert(m_userData.end(), data, data + len); }
+        /**
+         * Set the user data to send to the ESP if required
+         * @param data byte array to send to the ESP
+         * @param len length of the array
+         */
+        void SetUserData(uint8_t *data, size_t len) { m_userData.insert(m_userData.end(), data, data + len); }
 
-    void SetUserData(const std::vector<uint8_t>& data) { m_userData = std::move(data); }
+        void SetUserData(const std::vector<uint8_t> &data) { m_userData = std::move(data); }
 
-  private:
-    void SendUserData();
+        void SetFlashProgressCallback(const std::function<void(size_t progress, size_t size)> &callback) {
+            m_flashProgressCallback = std::move(callback);
+        }
 
-    bool Bootloader();
+    private:
+        void SendUserData();
 
-    bool PrepareFlash();
+        bool Bootloader();
 
-    bool FlashBinary(size_t address, size_t file_size, size_t block_size, const std::function<size_t(uint8_t*)>& cb);
+        bool PrepareFlash();
 
-  private:
-    Pins                 m_pins = {};
-    std::string          m_version;
-    Firmware             m_firmware;
-    std::vector<uint8_t> m_userData;
+        bool
+        FlashBinary(size_t address, size_t file_size, size_t block_size, const std::function<size_t(uint8_t *)> &cb);
 
-  private:
-    static constexpr size_t TIMEOUT = 5 * 1000;
-};
+    private:
+        Pins m_pins = {};
+        std::string m_version;
+        Firmware m_firmware;
+        std::vector<uint8_t> m_userData;
+        std::function<void(size_t progress, size_t size)> m_flashProgressCallback = [](size_t, size_t){};
+
+    private:
+        static constexpr size_t TIMEOUT = 5 * 1000;
+    };
 }    // namespace Nilai::Interfaces::Esp32
 /**
  * @}
