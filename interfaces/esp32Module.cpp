@@ -260,7 +260,7 @@ namespace Nilai::Interfaces::Esp32 {
             }
             err = esp_loader_flash_write(payload.data(), last_block_size);
             if (err != ESP_LOADER_SUCCESS) {
-                ESP_ERROR("Packet could not be written! error %d", err);
+                ESP_ERROR("Packet %d could not be written! error %d", written, err);
                 return false;
             }
             Logger::Log("Flashing %02d%% [%d/%d]\r", written * 100 / file_size, written, file_size);
