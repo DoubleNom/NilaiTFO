@@ -217,6 +217,8 @@ namespace Nilai::Interfaces::Esp32 {
             }
         }
 
+        m_flashDone();
+
         return true;
     }
 

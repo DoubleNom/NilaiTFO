@@ -113,19 +113,26 @@ namespace Nilai::Interfaces::Esp32 {
          * Default firmware (empty) will disable flashing procedure.
          * @param firmware structure of the binary files
          */
-        void SetFirmware(const Firmware &firmware) { m_firmware = std::move(firmware); }
+        [[maybe_unused]] void SetFirmware(const Firmware &firmware) { m_firmware = std::move(firmware); }
 
         /**
          * Set the user data to send to the ESP if required
          * @param data byte array to send to the ESP
          * @param len length of the array
          */
-        void SetUserData(uint8_t *data, size_t len) { m_userData.insert(m_userData.end(), data, data + len); }
+        [[maybe_unused]] void SetUserData(uint8_t *data, size_t len) {
+            m_userData.insert(m_userData.end(), data, data + len);
+        }
 
-        void SetUserData(const std::vector<uint8_t> &data) { m_userData = std::move(data); }
+        [[maybe_unused]] void SetUserData(const std::vector<uint8_t> &data) { m_userData = data; }
 
-        void SetFlashProgressCallback(const std::function<void(size_t progress, size_t size)> &callback) {
-            m_flashProgressCallback = std::move(callback);
+        [[maybe_unused]] void
+        SetFlashProgressCallback(const std::function<void(size_t progress, size_t size)> &callback) {
+            m_flashProgressCallback = callback;
+        }
+
+        [[maybe_unused]] void SetFlashDoneCallback(const std::function<void()> &callback) {
+            m_flashDone = callback;
         }
 
     private:
@@ -143,7 +150,8 @@ namespace Nilai::Interfaces::Esp32 {
         std::string m_version;
         Firmware m_firmware;
         std::vector<uint8_t> m_userData;
-        std::function<void(size_t progress, size_t size)> m_flashProgressCallback = [](size_t, size_t){};
+        std::function<void(size_t progress, size_t size)> m_flashProgressCallback = [](size_t, size_t) {};
+        std::function<void()> m_flashDone = []() {};
 
     private:
         static constexpr size_t TIMEOUT = 5 * 1000;
