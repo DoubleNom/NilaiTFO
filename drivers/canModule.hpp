@@ -318,7 +318,7 @@ struct Frame
 class CanModule : public cep::Module
 {
 public:
-    CanModule(CAN_HandleTypeDef* handle, const std::string& label);
+    CanModule(CAN_HandleTypeDef* handle, std::string  label);
     virtual ~CanModule() override;
 
     virtual bool               DoPost() override;
