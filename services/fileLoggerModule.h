@@ -15,9 +15,11 @@
 /***********************************************/
 /* Includes */
 #if defined(NILAI_USE_FILE_LOGGER)
+
 #include "defines/module.hpp"
 #include "services/file.h"
 #include "services/filesystem.h"
+#include "drivers/uart/module.hpp"
 
 #include <functional>
 
@@ -25,35 +27,39 @@
 /***********************************************/
 /* Defines */
 class FileLogger : public cep::Module {
-  public:
+public:
     FileLogger() = default;
-    FileLogger(const std::string& label, const std::string& path = "log.txt");
+
+    FileLogger(std::string label, const std::string &path = "log.txt");
+
     virtual ~FileLogger() override;
 
-    virtual bool               DoPost() override;
-    virtual void               Run() override;
-    virtual const std::string& GetLabel() const { return m_label; }
+    virtual bool DoPost() override;
 
-    std::function<void(const char*, size_t)> GetLogFunc() {
-        using namespace std::placeholders;
-        return std::bind(&FileLogger::Log, this, _1, _2);
-    }
+    virtual void Run() override;
+
+    virtual const std::string &GetLabel() const { return m_label; }
+
+    void Write(const char* msg, size_t len);
 
     void Flush();
+private:
 
-  private:
-    void Log(const char* msg, size_t len);
+    void Log(const char *fmt, ...);
 
-  private:
-    std::string m_label = "";
-    std::string m_path  = "";
+    void VLog(const char *fmt, va_list args);
+
+private:
+    std::string m_label;
+    std::string m_path;
+    UART_HandleTypeDef *m_uart = nullptr;
 
     cep::Filesystem::File m_logFile;
 
-    static constexpr size_t CACHE_SIZE          = NILAI_FILE_LOGGER_CACHE_SIZE;
-    static constexpr size_t SYNC_TIME           = NILAI_FILE_LOGGER_SYNC_INTERVAL;
-    char                    m_cache[CACHE_SIZE] = {0};
-    size_t                  m_cacheLoc          = 0;
+    static constexpr size_t CACHE_SIZE = NILAI_FILE_LOGGER_CACHE_SIZE;
+    static constexpr size_t SYNC_TIME = NILAI_FILE_LOGGER_SYNC_INTERVAL;
+    char m_cache[CACHE_SIZE] = {0};
+    size_t m_cacheLoc = 0;
 };
 
 /***********************************************/

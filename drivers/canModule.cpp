@@ -16,6 +16,7 @@
 #include "drivers/canModule.hpp"
 
 #if defined(NILAI_USE_CAN) && defined(HAL_CAN_MODULE_ENABLED)
+
 #include "services/logger.hpp"
 
 #include <algorithm>
@@ -28,26 +29,24 @@
 #endif
 #define CAN_ERROR(msg, ...) LOGTE(m_label.c_str(), msg __VA_OPT__(, ) __VA_ARGS__)
 
-CanModule::CanModule(CAN_HandleTypeDef* handle, const std::string& label) : m_handle(handle), m_label(label) {
+CanModule::CanModule(CAN_HandleTypeDef *handle, const std::string &label) : m_handle(handle), m_label(label) {
     CEP_ASSERT(handle != nullptr, "CAN Handle is NULL!");
     m_framesReceived.reserve(5);
     m_callbacks = std::map<CEP_CAN::Irq, std::function<void()>>(
-      {{CEP_CAN::Irq::TxMailboxEmpty, {}},
-       {CEP_CAN::Irq::Fifo0MessagePending, {}},
-       {CEP_CAN::Irq::Fifo0Full, {}},
-       {CEP_CAN::Irq::Fifo0Overrun, {}},
-       {CEP_CAN::Irq::Fifo1MessagePending, {}},
-       {CEP_CAN::Irq::Fifo1Full, {}},
-       {CEP_CAN::Irq::Fifo1Overrun, {}},
-       {CEP_CAN::Irq::Wakeup, {}},
-       {CEP_CAN::Irq::SleepAck, {}},
-       {CEP_CAN::Irq::ErrorWarning, {}},
-       {CEP_CAN::Irq::ErrorPassive, {}},
-       {CEP_CAN::Irq::BusOffError, {}},
-       {CEP_CAN::Irq::LastErrorCode, {}},
-       {CEP_CAN::Irq::ErrorStatus, {}}});
-
-    HAL_CAN_Start(m_handle);
+            {{CEP_CAN::Irq::TxMailboxEmpty,      {}},
+             {CEP_CAN::Irq::Fifo0MessagePending, {}},
+             {CEP_CAN::Irq::Fifo0Full,           {}},
+             {CEP_CAN::Irq::Fifo0Overrun,        {}},
+             {CEP_CAN::Irq::Fifo1MessagePending, {}},
+             {CEP_CAN::Irq::Fifo1Full,           {}},
+             {CEP_CAN::Irq::Fifo1Overrun,        {}},
+             {CEP_CAN::Irq::Wakeup,              {}},
+             {CEP_CAN::Irq::SleepAck,            {}},
+             {CEP_CAN::Irq::ErrorWarning,        {}},
+             {CEP_CAN::Irq::ErrorPassive,        {}},
+             {CEP_CAN::Irq::BusOffError,         {}},
+             {CEP_CAN::Irq::LastErrorCode,       {}},
+             {CEP_CAN::Irq::ErrorStatus,         {}}});
 
     LOGTI(m_label.c_str(), "Initialized");
 }
@@ -59,14 +58,19 @@ CanModule::~CanModule() { HAL_CAN_Stop(m_handle); }
  * @return
  */
 bool CanModule::DoPost() {
-    LOGTI(m_label.c_str(), "POST OK");
-    return true;
+    HAL_StatusTypeDef err = HAL_CAN_Start(m_handle);
+    if(err != HAL_OK) {
+        CAN_ERROR("Failed to start can. %d", err);
+        return false;
+    } else {
+        return true;
+    }
 }
 
-void CanModule::Run() { }
+void CanModule::Run() {}
 
-void CanModule::ConfigureFilter(const CEP_CAN::FilterConfiguration& config) {
-    uint64_t hash = ((uint64_t)config.filterId.fullId << 32) | config.maskId.fullId;
+void CanModule::ConfigureFilter(const CEP_CAN::FilterConfiguration &config) {
+    uint64_t hash = ((uint64_t) config.filterId.fullId << 32) | config.maskId.fullId;
 
     CAN_FilterTypeDef filter = AssertAndConvertFilterStruct(config);
 
@@ -82,10 +86,11 @@ CEP_CAN::Frame CanModule::ReceiveFrame() {
     m_framesReceived.pop_back();
     return frame;
 }
-CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const std::vector<uint8_t>& data, bool forceExtended) {
-    CAN_TxHeaderTypeDef head = {0, 0, 0, 0, 0, (FunctionalState)0};
-    head.StdId               = addr & 0x000007FF;
-    head.ExtId               = addr & 0x1FFFFFFF;
+
+CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const std::vector<uint8_t> &data, bool forceExtended) {
+    CAN_TxHeaderTypeDef head = {0, 0, 0, 0, 0, (FunctionalState) 0};
+    head.StdId = addr & 0x000007FF;
+    head.ExtId = addr & 0x1FFFFFFF;
     // If address is higher than 0x7FF, use extended ID.
     if ((addr > 0x7FF) || forceExtended) {
         head.IDE = CAN_ID_EXT;
@@ -94,9 +99,9 @@ CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const std::vector<uint8_
     }
 
     // If we have data, this is a data frame. Else it's a remote frame.
-    head.RTR = data.empty() ? (uint32_t)CEP_CAN::FrameType::Remote : (uint32_t)CEP_CAN::FrameType::Data;
+    head.RTR = data.empty() ? (uint32_t) CEP_CAN::FrameType::Remote : (uint32_t) CEP_CAN::FrameType::Data;
     // Cap amount of data at 8 bytes.
-    head.DLC = std::min(data.size(), (size_t)8);
+    head.DLC = std::min(data.size(), (size_t) 8);
 
     if (!WaitForFreeMailbox()) {
         CAN_ERROR("Timed out before a Tx mailbox is free");
@@ -105,9 +110,10 @@ CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const std::vector<uint8_
 
     uint32_t buffNum = 0;
 
+    CAN_DEBUG("Sending frame: %x", head.StdId);
     // Add frame to the mailbox.
     // Using const_cast here because data.data() is a const uint8_t* and not a uint8_t*.
-    if (HAL_CAN_AddTxMessage(m_handle, &head, const_cast<uint8_t*>(data.data()), &buffNum) != HAL_OK) {
+    if (HAL_CAN_AddTxMessage(m_handle, &head, const_cast<uint8_t *>(data.data()), &buffNum) != HAL_OK) {
         CAN_ERROR("Unable to add frame to mailbox");
         return CEP_CAN::Status::TX_ERROR;
     }
@@ -115,7 +121,7 @@ CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const std::vector<uint8_
     return CEP_CAN::Status::ERROR_NONE;
 }
 
-CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const uint8_t* data, size_t len, bool forceExtended) {
+CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const uint8_t *data, size_t len, bool forceExtended) {
     std::vector<uint8_t> dataV;
 
     if (data != nullptr && len > 0) {
@@ -128,11 +134,13 @@ CEP_CAN::Status CanModule::TransmitFrame(uint32_t addr, const uint8_t* data, siz
     return TransmitFrame(addr, dataV, forceExtended);
 }
 
-void CanModule::SetCallback(CEP_CAN::Irq irq, const std::function<void()>& callback) { m_callbacks[irq] = callback; }
+void CanModule::SetCallback(CEP_CAN::Irq irq, const std::function<void()> &callback) { m_callbacks[irq] = callback; }
+
 void CanModule::ClearCallback(CEP_CAN::Irq irq) { m_callbacks[irq] = std::function<void()>(); }
 
-void CanModule::EnableInterrupt(CEP_CAN::Irq irq) { __HAL_CAN_ENABLE_IT(m_handle, (uint32_t)irq); }
-void CanModule::DisableInterrupt(CEP_CAN::Irq irq) { __HAL_CAN_DISABLE_IT(m_handle, (uint32_t)irq); }
+void CanModule::EnableInterrupt(CEP_CAN::Irq irq) { __HAL_CAN_ENABLE_IT(m_handle, (uint32_t) irq); }
+
+void CanModule::DisableInterrupt(CEP_CAN::Irq irq) { __HAL_CAN_DISABLE_IT(m_handle, (uint32_t) irq); }
 
 void CanModule::HandleIrq() {
     // CAN Interrupt Register.
@@ -150,7 +158,7 @@ void CanModule::HandleIrq() {
 
 void CanModule::HandleFrameReception(CEP_CAN::RxFifo fifo) {
     CEP_CAN::Frame frame = CEP_CAN::Frame();
-    HAL_CAN_GetRxMessage(m_handle, (uint32_t)fifo, &frame.frame, frame.data.data());
+    HAL_CAN_GetRxMessage(m_handle, (uint32_t) fifo, &frame.frame, frame.data.data());
     frame.timestamp = HAL_GetTick();
 
     m_framesReceived.push_back(frame);
@@ -168,7 +176,8 @@ void CanModule::HandleFrameReception(CEP_CAN::RxFifo fifo) {
                 m_callbacks[CEP_CAN::Irq::Fifo1MessagePending]();
             }
             break;
-        default: CEP_ASSERT(false, "In %s::HandleFrameReception, invalid FIFO!", m_label.c_str());
+        default:
+            CEP_ASSERT(false, "In %s::HandleFrameReception, invalid FIFO!", m_label.c_str());
     }
 }
 
@@ -188,15 +197,13 @@ void CanModule::HandleTxMailbox0Irq(uint32_t ier) {
                 if (m_callbacks[CEP_CAN::Irq::TxMailboxEmpty]) {
                     m_callbacks[CEP_CAN::Irq::TxMailboxEmpty]();
                 }
-            }
-
-            else {
+            } else {
                 // Check Arbitration Lost flag.
                 if ((tsrFlags & CAN_TSR_ALST0) != 0) {
                     m_status |= CEP_CAN::Status::ERROR_TX_ALST0;
                 }
 
-                // Check Transmission Error flag.
+                    // Check Transmission Error flag.
                 else if ((tsrFlags & CAN_TSR_TERR0) != 0) {
                     m_status |= CEP_CAN::Status::ERROR_TX_TERR0;
                 } else {
@@ -230,15 +237,13 @@ void CanModule::HandleTxMailbox1Irq(uint32_t ier) {
                 if (m_callbacks[CEP_CAN::Irq::TxMailboxEmpty]) {
                     m_callbacks[CEP_CAN::Irq::TxMailboxEmpty]();
                 }
-            }
-
-            else {
+            } else {
                 // Check Arbitration Lost flag.
                 if ((tsrFlags & CAN_TSR_ALST1) != 0) {
                     m_status |= CEP_CAN::Status::ERROR_TX_ALST1;
                 }
 
-                // Check Transmission Error flag.
+                    // Check Transmission Error flag.
                 else if ((tsrFlags & CAN_TSR_TERR1) != 0) {
                     m_status |= CEP_CAN::Status::ERROR_TX_TERR1;
                 } else {
@@ -278,7 +283,7 @@ void CanModule::HandleTxMailbox2Irq(uint32_t ier) {
                     m_status |= CEP_CAN::Status::ERROR_TX_ALST2;
                 }
 
-                // Check Transmission Error flag.
+                    // Check Transmission Error flag.
                 else if ((tsrFlags & CAN_TSR_TERR2) != 0) {
                     m_status |= CEP_CAN::Status::ERROR_TX_TERR2;
                 } else {
@@ -468,7 +473,8 @@ void CanModule::HandleErrorIrq(uint32_t ier) {
                         // CRC Error:
                         m_status |= CEP_CAN::Status::ERROR_CRC;
                         break;
-                    default: break;
+                    default:
+                        break;
                 }
 
                 // Clear Last Error code Flag.
@@ -488,18 +494,18 @@ void CanModule::HandleErrorIrq(uint32_t ier) {
 /*****************************************************************************/
 /* Private method definitions                                                */
 /*****************************************************************************/
-CAN_FilterTypeDef CanModule::AssertAndConvertFilterStruct(const CEP_CAN::FilterConfiguration& config) {
-    CAN_FilterTypeDef filter = {0, 0, 0, 0, 0, (FunctionalState)0};
+CAN_FilterTypeDef CanModule::AssertAndConvertFilterStruct(const CEP_CAN::FilterConfiguration &config) {
+    CAN_FilterTypeDef filter = {0, 0, 0, 0, 0, (FunctionalState) 0};
 
-    filter.FilterIdHigh         = config.filterId.idHigh;
-    filter.FilterIdLow          = config.filterId.idLow;
-    filter.FilterMaskIdHigh     = config.maskId.maskIdHigh;
-    filter.FilterMaskIdLow      = config.maskId.maskIdLow;
-    filter.FilterFIFOAssignment = (uint32_t)config.fifo;
-    filter.FilterBank           = config.bank;
-    filter.FilterMode           = (uint32_t)config.mode;
-    filter.FilterScale          = (uint32_t)config.scale;
-    filter.FilterActivation     = (uint32_t)config.activate;
+    filter.FilterIdHigh = config.filterId.idHigh;
+    filter.FilterIdLow = config.filterId.idLow;
+    filter.FilterMaskIdHigh = config.maskId.maskIdHigh;
+    filter.FilterMaskIdLow = config.maskId.maskIdLow;
+    filter.FilterFIFOAssignment = (uint32_t) config.fifo;
+    filter.FilterBank = config.bank;
+    filter.FilterMode = (uint32_t) config.mode;
+    filter.FilterScale = (uint32_t) config.scale;
+    filter.FilterActivation = (uint32_t) config.activate;
     filter.SlaveStartFilterBank = 0;
 
     return filter;
