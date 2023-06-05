@@ -773,7 +773,7 @@ public:
      * Using an un-initialized instance will result in UB.
      */
     constexpr At24Qt2120() noexcept = default;
-    constexpr At24Qt2120(At24Qt2120&&) noexcept;
+    At24Qt2120(At24Qt2120&&) noexcept;
     At24Qt2120& operator=(At24Qt2120&& o) noexcept;
 
     constexpr operator bool() const noexcept { return m_initialized; }

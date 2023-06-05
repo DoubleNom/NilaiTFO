@@ -671,7 +671,7 @@ void At24Qt2120::SetRegisters(AT24QT2120::Registers r, const uint8_t* data, size
     TransmitFrameToRegister(s_i2cAddress, static_cast<uint8_t>(r), data, cnt);
 }
 
-constexpr At24Qt2120::At24Qt2120(At24Qt2120&& o) noexcept : I2cModule(std::move(o))
+At24Qt2120::At24Qt2120(At24Qt2120&& o) noexcept : I2cModule(std::move(o))
 {
 #    if defined(NILAI_USE_EVENTS)
     Nilai::Application::Get().UnregisterEventCallback(m_irqType, m_irqId);

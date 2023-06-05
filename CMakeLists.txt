@@ -51,14 +51,6 @@ endif ()
 
 #------------------------------------------------------------------------------
 if (NOT NILAI_TEST)
-    set(CMAKE_C_COMPILER arm-none-eabi-gcc)
-    set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
-    set(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
-    set(CMAKE_AR arm-none-eabi-ar)
-    set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
-    set(CMAKE_OBJDUMP arm-none-eabi-objdump)
-    set(SIZE arm-none-eabi-size)
-
     add_compile_definitions(ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING)
     add_compile_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
     add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
